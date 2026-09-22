@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+:root {
+  /*
+   * Fieldnote design tokens — the single source of truth.
+   * Consumed here (via @theme below → Tailwind utilities) and by
+   * editor.settings.designTokens in builder-registry.ts (Phase 2).
+   * Change a value here and the app, Tailwind classes, and the Builder
+   * token picker all move together — that three-way binding is the
+   * highest-leverage fix vs. the old build, where 30 registered tokens
+   * pointed at CSS variables that didn't exist anywhere.
+   */
+  --fn-color-primary: #1b3a2f;
+  --fn-color-accent: #d4622a;
+  --fn-color-sand: #e8dfd2;
+  --fn-color-ink: #14161a;
+  --fn-color-slate: #5c6670;
+  --fn-color-surface: #ffffff;
+  --fn-color-surface-alt: #f7f5f1;
+  --fn-color-success: #2f6b4f;
+  --fn-color-warning: #b8791c;
+  --fn-color-danger: #a6342b;
+
+  --fn-font-display: var(--font-display), system-ui, sans-serif;
+  --fn-font-body: var(--font-body), system-ui, sans-serif;
+
+  --fn-radius-sm: 4px;
+  --fn-radius-md: 8px;
+  --fn-radius-lg: 16px;
+
+  --fn-text-xs: 12px;
+  --fn-text-sm: 14px;
+  --fn-text-base: 16px;
+  --fn-text-lg: 18px;
+  --fn-text-xl: 24px;
+  --fn-text-2xl: 32px;
+  --fn-text-3xl: 44px;
+  --fn-text-4xl: 56px;
+
+  /*
+   * Spacing intentionally has no --fn-space-* override: the seed spec's
+   * scale (4/8/12/16/24/32/48/64px) is exactly Tailwind v4's default
+   * rem-based spacing scale at steps 1/2/3/4/6/8/12/16 (1 step = 4px).
+   * p-4, gap-6, m-8 etc. already are the Fieldnote spacing system.
+   */
+}
+
+@theme inline {
+  --color-primary: var(--fn-color-primary);
+  --color-accent: var(--fn-color-accent);
+  --color-sand: var(--fn-color-sand);
+  --color-ink: var(--fn-color-ink);
+  --color-slate: var(--fn-color-slate);
+  --color-surface: var(--fn-color-surface);
+  --color-surface-alt: var(--fn-color-surface-alt);
+  --color-success: var(--fn-color-success);
+  --color-warning: var(--fn-color-warning);
+  --color-danger: var(--fn-color-danger);
+
+  --font-display: var(--fn-font-display);
+  --font-body: var(--fn-font-body);
+
+  --radius-sm: var(--fn-radius-sm);
+  --radius-md: var(--fn-radius-md);
+  --radius-lg: var(--fn-radius-lg);
+
+  --text-xs: var(--fn-text-xs);
+  --text-sm: var(--fn-text-sm);
+  --text-base: var(--fn-text-base);
+  --text-lg: var(--fn-text-lg);
+  --text-xl: var(--fn-text-xl);
+  --text-2xl: var(--fn-text-2xl);
+  --text-3xl: var(--fn-text-3xl);
+  --text-4xl: var(--fn-text-4xl);
+}
+
+body {
+  background: var(--fn-color-surface);
+  color: var(--fn-color-ink);
+  font-family: var(--fn-font-body);
+}
