@@ -1,0 +1,102 @@
+---
+description: Component authoring rules for every registered Builder component
+globs: src/components/builder/**/*.tsx
+alwaysApply: true
+---
+
+# Component authoring rules
+
+Every registered component, without exception:
+
+## 1. Spread `{...attributes}` onto the root DOM element
+
+This carries `builder-id`. Missing it is the #1 documented cause of empty
+heatmaps — clicks and impressions on that component become invisible.
+
+Pair it with `noWrap: true` in the registration so Builder doesn't also wrap
+your output in its own extra div. One root element, one `{...attributes}`
+spread — not a double-wrapped div carrying it twice.
+
+```tsx
+export function MyComponent({ attributes, ...props }: Props) {
+  return <section {...attributes}>...</section>;
+}
+```
+```ts
+register("component", { component: MyComponent, name: "MyComponent", noWrap: true, ... });
+```
+
+## 2. No interpolated Tailwind classes
+
+`` `text-${align}` `` never compiles — Tailwind's scanner needs the literal
+class name string in source to generate it. Use a static lookup map instead:
+
+```ts
+const ALIGN_CLASSES: Record<Align, string> = { left: "text-left", center: "text-center" };
+// ...
+className={ALIGN_CLASSES[align]}
+```
+
+Combining multiple *already-resolved* strings from such maps (via template
+literal, array join, etc.) is fine — every individual class name is still a
+literal Tailwind can see. Only interpolating a raw prop value into a class name
+template is the forbidden pattern.
+
+## 3. Real thumbnail + sensible non-lorem defaults
+
+`image` on the registration should be a real, always-available image — an
+inline SVG data URI is the simplest way to guarantee that with zero external
+dependency (see any of the 3 exemplars in `src/builder-registry.ts` for the
+pattern). Every input needs a `defaultValue` real enough that dragging the
+component in with zero configuration still looks like something real, not an
+empty state or lorem ipsum.
+
+## 4. Sanitize any `dangerouslySetInnerHTML` with DOMPurify
+
+No exceptions. If a component renders HTML from a `richText`/`html` field
+(article bodies, `RichText`), it must sanitize before rendering:
+
+```ts
+import DOMPurify from "isomorphic-dompurify";
+// ...
+<div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }} />
+```
+
+## 5. Nothing rendered is hollow
+
+If a visible affordance renders (a cart icon, a form, a button), it does the
+real thing. No unmodified copy-pasted example content, no `console.log`
+standing in for an action, no static `1 2 3` pretending to be pagination. If
+the real thing isn't built yet, don't render the affordance.
+
+## 6. Availability — don't scope by default
+
+Leave `models` unset (available on every model) unless the component is
+genuinely narrow-purpose. `Hero`/`Section`/`ProductCard` are deliberately
+unscoped because they're needed on `homepage`, `article`, `pdp-section` *and*
+page models — scoping to `['page', 'landing-page']` would silently hide them
+from contexts that need them. Same caution applies to `requiredPermissions`:
+most components should show to everyone (styling access is already gated by
+the `editDesigns` role permission at the platform level); reserve
+`requiredPermissions` for something genuinely sensitive.
+
+Insert-menu availability (i.e. every `register()` call in
+`src/builder-registry.ts`) must run unconditionally — never gate any of it on
+`builder.editingModel` or any other condition. That exact gate
+(`editingModel === "homepage"`) is what hid 9 components in the old build.
+
+## 7. `canHaveChildren` components receive `children` directly
+
+No Gen-1-style `withChildren()` HOC needed on this SDK — a component
+registered with `canHaveChildren: true` just receives a normal `children`
+React prop, already rendered. Add a `childRequirements` guardrail if nesting
+the component inside itself (or another specific component) would break its
+own layout assumptions — see `Section`'s anti-self-nesting rule for the
+pattern. Don't restrict children beyond that unless the component is genuinely
+narrow-purpose; a general layout wrapper should accept anything.
+
+## 8. One combined registration array
+
+Every component goes into the `CUSTOM_COMPONENTS` array in
+`src/builder-registry.ts` — see `.builder/rules/builder-registry.mdc` for why
+calling `register("component", ...)` on its own is not enough to render.

@@ -89,37 +89,37 @@ Work top to bottom. Items marked **⛔** are hard blockers — nothing downstrea
 - [ ] ⛔ 🔥 **Single `builder-registry.ts`, client-side.** RSCs cannot be registered as custom components **on this SDK**. *(They can on `sdk-react-nextjs` via `isRSC: true` — don't tell a prospect Builder can't do RSC.)*
 - [ ] 🔥 `builder.init` equivalent **once** — Gen 2 takes `apiKey` per call; centralize it in one config module. *(Today it's called 13 times.)*
 - [ ] 🔥 ISR with `revalidate`. **No `force-dynamic`.** Leave `staleCacheSeconds` high — default is **one day**; 3600s is the *minimum*, not the default.
-- [ ] Set **Preview URL** on every model (include the scheme: `http://localhost:3000`)
-- [ ] `/demo-switcher` page (noindex) with buttons to set targeting attributes
-- [ ] CI: typecheck + lint + build on PR. *(The old repo has never had CI.)*
+- [x] Set **Preview URL** on every model (include the scheme: `http://localhost:3000`) — done in Phase 3a
+- [x] `/demo-switcher` page (noindex) with buttons to set targeting attributes — 6 segments from seed spec §5, real cookie + redirect, not yet wired into the homepage fetch (see CLAUDE.md)
+- [x] CI: typecheck + lint + build on PR. *(The old repo has never had CI.)* — also runs `test`; `.github/workflows/ci.yml`
 
 ---
 
 ## Phase 2 — Components · 4 days
 
 **Every component, without exception:**
-- [ ] ⛔ 🔥 Spreads `{...attributes}` onto its root element — **this carries `builder-id`, and missing it is the #1 documented cause of empty heatmaps**
-- [ ] 🔥 Has a real thumbnail image
-- [ ] 🔥 Has sensible non-lorem defaults
-- [ ] 🔥 Sanitizes any `dangerouslySetInnerHTML` with DOMPurify *(today 5 of 6 are unsanitized)*
-- [ ] 🔥 Uses **no interpolated Tailwind classes** — `text-${alignment}` never compiles. Map to a static lookup object. *(Four components have inert inputs because of this.)*
+- [x] ⛔ 🔥 Spreads `{...attributes}` onto its root element — **this carries `builder-id`, and missing it is the #1 documented cause of empty heatmaps** — paired with `noWrap: true` on all 3 exemplars
+- [x] 🔥 Has a real thumbnail image — inline SVG data URIs, no external dependency
+- [x] 🔥 Has sensible non-lorem defaults
+- [x] 🔥 Sanitizes any `dangerouslySetInnerHTML` with DOMPurify *(today 5 of 6 are unsanitized)* — n/a for the 3 exemplars, none render raw HTML; first component that does (`RichText`, article bodies) must add `isomorphic-dompurify`, per `.builder/rules/components.mdc`
+- [x] 🔥 Uses **no interpolated Tailwind classes** — `text-${alignment}` never compiles. Map to a static lookup object. *(Four components have inert inputs because of this.)*
 
 ### 2a — Three exemplar components · **Claude Code**
 
 *These are reference implementations. Builder Code will pattern-match off them for the other nine, so anything sloppy here propagates nine more times.*
 
-- [ ] ⛔ 🔥 `Hero` — `variant`: image / split / text (replaces 3 near-duplicates)
-- [ ] ⛔ 🔥 `Section` — width / padding / background, all token-bound
-- [ ] ⛔ 🔥 `ProductCard` — `source` enum + **static fallback**
+- [x] ⛔ 🔥 `Hero` — `variant`: image / split / text (replaces 3 near-duplicates) — live-render-verified
+- [x] ⛔ 🔥 `Section` — width / padding / background, all token-bound — live-render-verified
+- [x] ⛔ 🔥 `ProductCard` — `source` enum + **static fallback** — live-render-verified; defaults to `static` since `product` has no reachable entries yet (see CLAUDE.md discrepancy note)
 
 ### 2b — Handoff artifacts · **Claude Code** · ⛔ *this is what makes Builder Code good*
 
-- [ ] ⛔ **`AGENTS.md`** (< 500 lines) — stack, model schema, token namespace, non-negotiables
-- [ ] ⛔ **`.builder/rules/*.mdc`** — ⚠️ each ≤ **200 lines / 6,000 chars**, combined always-on ≤ **500 lines**, **max 3–5 with `alwaysApply: true`**. Builder documents *"rule fatigue"* past that — the agent starts ignoring them. Suggested: `components.mdc`, `tokens.mdc`, `builder-registry.mdc` (always-on) + `content-models.mdc` (on-demand)
-- [ ] ⛔ **`npm run typecheck` and `npm run test` must exist and pass** — Builder Code runs them as its **Validation command** after *every* agent task. The only documented mechanism that makes it self-correcting.
-- [ ] Set the Validation command in Builder Code: Project Settings → Setup
-- [ ] Project Settings → Agent → consider turning **off** "Enforce default command restrictions" (it's **on** by default and blocks `curl` and `npx`)
-- [ ] Connect Builder Code to the repo
+- [x] ⛔ **`AGENTS.md`** (< 500 lines) — stack, model schema, token namespace, non-negotiables — 172 lines, includes the `customComponents` registration gotcha (see CLAUDE.md)
+- [x] ⛔ **`.builder/rules/*.mdc`** — ⚠️ each ≤ **200 lines / 6,000 chars**, combined always-on ≤ **500 lines**, **max 3–5 with `alwaysApply: true`**. Builder documents *"rule fatigue"* past that — the agent starts ignoring them. Suggested: `components.mdc`, `tokens.mdc`, `builder-registry.mdc` (always-on) + `content-models.mdc` (on-demand) — built exactly this way, combined always-on 257 lines
+- [x] ⛔ **`npm run typecheck` and `npm run test` must exist and pass** — Builder Code runs them as its **Validation command** after *every* agent task. The only documented mechanism that makes it self-correcting.
+- [ ] Set the Validation command in Builder Code: Project Settings → Setup — **Hunter's action**, no MCP/CLI access to Builder Code's own UI settings
+- [ ] Project Settings → Agent → consider turning **off** "Enforce default command restrictions" (it's **on** by default and blocks `curl` and `npx`) — **Hunter's action**
+- [ ] Connect Builder Code to the repo — **Hunter's action**
 
 ### 2c — Remaining nine components · 🟢 **Builder Code**
 

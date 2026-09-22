@@ -54,6 +54,11 @@ the correction.
 - **Per Hunter's instruction:** skip creating a separate `Fieldnote Sandbox` space —
   build directly in `Fieldnote`. (`Fieldnote Scaffold`, for the sub-agent-setup demo
   beat, is a later/optional item, not Phase 0.)
+- **Reconfirmed 2026-09-22 (session 2):** the Builder.io Publish MCP connector is
+  connected and `who_am_i` still resolves to space `Fieldnote`
+  (`3a593c5220b04d469e25606e2987ebc0`). This session runs on Hunter's own
+  machine, not the cloud sandbox the first session used — see "Things learned"
+  below for what that changes.
 - **This sandbox's network is allowlisted**, not general internet. Confirmed reachable:
   `registry.npmjs.org` (and other package registries). Confirmed **blocked** by org proxy
   policy (`connect_rejected`): `builder.io`, `cdn.builder.io`, `dummyjson.com`. The
@@ -113,8 +118,11 @@ fixed.
 
 ## Phase status
 
-**Phase 0, Phase 3a, and the core of Phase 1 are done.
-Next up: finish Phase 1 (demo-switcher page, CI) then Phase 2 (3 exemplar components + handoff artifacts).**
+**Phase 0, Phase 1, Phase 2, and Phase 3a are done.
+Next up: Phase 3b (bulk content seed — 48 products, 26 articles, etc.) or
+whatever Hunter directs. This session (2026-09-22, second session) ran on
+Hunter's own machine with real network access, unlike the first session's
+cloud sandbox — see the verification note in Phase 1 below.**
 
 ### Phase 1 — Foundation — core done (2026-09-22)
 
@@ -153,20 +161,130 @@ TypeScript strict, ESLint — all current, no deviation.
   lint` and `npm run build` also pass clean.
 - `.env.local` / `.env.example` carry `NEXT_PUBLIC_BUILDER_API_KEY` — safe to commit,
   it's the *public* key by design (not the private write key).
+- `src/app/demo-switcher/page.tsx` + `actions.ts`, `src/lib/demo-targeting.ts` —
+  6 segment buttons from seed spec §5 (VIP, Lapsed, Pro account, Paid social,
+  UAE mobile, Anonymous), each a `<form action={setDemoSegment}>` (Server
+  Action) writing a `fn_targeting` cookie and redirecting to `/`. Verified live
+  in a browser: clicking VIP sets the cookie, redirecting back to
+  `/demo-switcher` shows it as "Active." **Deliberately not wired into the
+  homepage's fetch yet** — `cookies()` forces a route into dynamic rendering,
+  which would knock `/` off ISR as a side effect of this page rather than a
+  decision Phase 6 ("pass `userAttributes` on every fetch") makes on purpose.
+  `npm run build`'s route output confirms the split is real: `/` stays `○
+  (Static)`, `/demo-switcher` is `ƒ (Dynamic)` — only the route that reads
+  cookies is dynamic.
+- `.github/workflows/ci.yml` — typecheck + lint + test + build on every PR and
+  push to `main`, Node 22 (matches this machine).
 
-**⚠️ Not yet verified: the live Builder fetch path.** `npm run build` in this sandbox
-logs `Failed to fetch homepage content from Builder: SyntaxError: Unexpected token 'H',
-"Host not i"...` from `fetchOneEntry` — that's this sandbox's network proxy rejecting the
-request to `cdn.builder.io` (same restriction noted in Phase 0), not a bug in the fetch
-code. The `.catch` handles it gracefully and the build succeeds (static page, empty
-render), which is exactly the "fails soft" behavior we want on a real CDN hiccup too —
-but it means **the actual data-fetching path, and therefore the whole homepage/token/
-component rendering loop, has not been confirmed against live Builder from this
-sandbox.** First thing to check once this runs somewhere with real egress (Vercel,
-Hunter's machine, or a local Claude Code instance): `npm run dev`, open `/`, confirm the
-homepage entry's `seoTitle`/`seoDescription` reach the page and no console errors.
+**✅ Verified 2026-09-22 (session 2, real network): the live Builder fetch path
+works end-to-end.** `npm run dev` / `npm run build` on Hunter's machine show **no**
+fetch error at all (the sandbox's `SyntaxError: Unexpected token 'H', "Host not
+i"...` is gone) — `fetchOneEntry` successfully reaches `cdn.builder.io`. The
+homepage still rendered blank on first load, which looked like a regression but
+wasn't: the seeded `homepage` entry is `published: "draft"` (never published)
+*and* has `blocks: []` (an intentional Phase 3a skeleton) — `fetchOneEntry`
+correctly returns `null` for unpublished content outside editor-preview mode, so
+`content` being `null` was the fetch working exactly as designed, not a bug.
+Confirmed by instrumenting the fetch temporarily and by checking the entry
+directly via `search_builder_content` (`includeDrafts: true`).
 
-**Not done yet in Phase 1:** `/demo-switcher` page, CI (typecheck+lint+build on PR).
+**Confirmed the full render loop separately**, since blocks:[] meant the real
+homepage entry couldn't prove components actually render: temporarily wrote a
+JSX block tree via `write_content_source` (Hero inside Section, plus a
+ProductCard) into the draft homepage entry, temporarily added `includeUnpublished:
+true` to the fetch (a real, documented `fetchOneEntry` option — diagnostic use
+only, reverted immediately after), and loaded `/` in a browser. All three
+Phase 2 components rendered pixel-correct with real Tailwind/token styling.
+Both the test content and the `includeUnpublished` flag were reverted afterward
+— the homepage entry is back to `blocks: []`/draft, `page.tsx` is back to its
+original fetch with no diagnostic-only options left in.
+
+**Hunter's call (asked directly, 2026-09-22):** leave all 24 Phase 3a skeleton
+entries in draft rather than publishing them now. Rationale: `blocks: []` means
+nothing would look different either way, and publishing becomes meaningful once
+Phase 3b gives entries real content — publishing now would just be redone then.
+
+**Discrepancy found, not yet resolved:** searching for existing `product` model
+entries (`search_builder_content`, `search_content_ids`, `browse_model_content`,
+various search terms, `includeDrafts: true`) turned up **zero** — despite Phase
+3a's note above claiming 2–3 skeleton entries per model including `product`.
+Either the `product` model never actually got its skeleton entries, or they
+exist under names/terms that didn't match anything searched. Worth a direct
+check before Phase 3b assumes it's starting from skeleton entries rather than
+zero.
+
+**Not done yet in Phase 1:** none — `/demo-switcher` and CI both done, see below.
+
+### Phase 2a — Three exemplar components — done (2026-09-22, session 2)
+
+`Hero`, `Section`, `ProductCard` in `src/components/builder/`, registered in
+`src/builder-registry.ts`. **Live-render-verified** in a browser via a
+temporary content block (see the Phase 1 verification note above), not just
+typechecked — all three rendered pixel-correct with real token styling.
+
+- **`Hero`** — `variant`: `image` / `split` / `text`, static lookup maps for
+  every variant-dependent class (no interpolation). `heroImageAlt` is
+  `required: true`, hidden via `showIf` only when `variant === "text"` — named
+  exactly that because seed spec §10 rule 3 checks `options.heroImageAlt` for
+  existence on `Hero` blocks.
+- **`Section`** — `width`/`padding`/`background`, `canHaveChildren: true`,
+  receives `children` directly (Gen 2 doesn't need Gen 1's `withChildren()`
+  HOC — confirmed from the SDK's own built-in `Section` block's prop types).
+  **Deliberately not scoped with `models: [...]`** and doesn't restrict its
+  own children beyond one guardrail: `childRequirements` blocking a `Section`
+  from nesting inside another `Section` (breaks both components' width/padding
+  assumptions). It's the general-purpose layout wrapper, so over-restricting
+  it would repeat the old build's availability-gating mistake in a new form.
+- **`ProductCard`** — `source`: `product` (a `reference` input scoped to the
+  `product` model) or `static` (default). **Defaulted to `static`, not
+  `product`,** specifically because the `product` model currently has zero
+  reachable entries (see the discrepancy note above) — defaulting to `product`
+  would make a freshly-dragged-in card depend on data that doesn't exist yet.
+  Revisit this default once Phase 3b seeds the real catalog.
+- **Deliberately skipped** on all three: `requiredPermissions` (styling access
+  is already role-gated platform-wide; these are general-purpose content
+  components, not sensitive ones) and DOMPurify (none of the three render
+  `dangerouslySetInnerHTML` — the first component that does, e.g. `RichText`
+  or the `article` body, needs to add `isomorphic-dompurify`).
+
+**⚠️ Major undocumented-behavior finding: `register("component", info)` alone
+does not make a component render.** Read from the SDK's compiled source
+(`node_modules/@builder.io/sdk-react/lib/browser/server-entry-*.js`): the
+global `register()` call only pushes into an in-memory store that's read to
+`postMessage` the Visual Editor iframe — i.e. it makes the component appear in
+the insert menu and options panel. It is **never read by `<Content>`'s own
+render path.** `<Content>` resolves which components to render from an
+explicit `customComponents` prop instead (confirmed from
+`ContentVariantsPrps`'s type: `customComponents?: RegisteredComponent[]`).
+Skip that prop and every registered component fails identically: fully
+editable in the Visual Editor, renders as nothing at runtime, with only a
+console warning (`Could not find a registered component named "X"...`) to
+explain why — no error, no crash. This is **the** thing to know before adding
+any of the other 9 components. Fixed by restructuring
+`src/builder-registry.ts` around one `CUSTOM_COMPONENTS: RegisteredComponent[]`
+array that's both looped over for `register()` calls *and* exported for
+`RenderBuilderContent.tsx` to pass as `<Content customComponents={...}>`.
+Documented prominently in `AGENTS.md` and `.builder/rules/builder-registry.mdc`
+so Builder Code doesn't repeat this silently when it adds the remaining 9.
+
+### Phase 2b — Handoff artifacts — done (2026-09-22, session 2)
+
+- **`AGENTS.md`** (172 lines, under the 500-line budget) — rewritten around
+  the existing Next.js-generated `BEGIN/END:nextjs-agent-rules` marker block
+  (preserved verbatim, not replaced). Covers the stack, the
+  `customComponents` gotcha above, the registry pattern, the 3 exemplars'
+  design decisions, the 14-model table, tokens, and the validation command.
+- **`.builder/rules/*.mdc`** — 4 files: `components.mdc` (102 lines/4,323
+  chars), `tokens.mdc` (65/3,251), `builder-registry.mdc` (90/3,993) — all
+  `alwaysApply: true`, combined 257 lines, well under the 500-line/3–5-file
+  budget — plus `content-models.mdc` (60/3,888, `alwaysApply: false`, the
+  14-model reference). Each individually well under 200 lines/6,000 chars.
+- **Validation command** — `npm run typecheck && npm run test` exist and pass
+  (confirmed again this session). Setting this as Builder Code's actual
+  Validation command is a **Project Settings → Setup** UI action — Claude
+  Code has no access to that UI, so this is still **Hunter's action item**,
+  same as "turn off Enforce default command restrictions" and "connect
+  Builder Code to the repo" (doc 07 §4/§2).
 
 ### Phase 3a — done (2026-09-22)
 
@@ -233,6 +351,17 @@ Phase 0 checklist items and status:
 
 ## Things learned that contradict or refine the plan docs
 
+- **`register("component", info)` doesn't make `<Content>` render it —
+  `customComponents` does.** Full finding in Phase 2a above. This isn't in any
+  plan doc because none of them anticipated it; it's a genuine SDK-source-level
+  discovery from this session, and it's the single most load-bearing thing in
+  `AGENTS.md` for whoever builds the remaining 9 components.
+- **This session runs with real network access; the first session's sandbox
+  didn't.** Everything the first session marked "blocked in this sandbox" due
+  to network policy (Builder REST endpoints, DummyJSON, client-rendered
+  impressions) is now technically reachable from Hunter's machine — but this
+  session's scope was Phase 1 completion + Phase 2 only, so none of those
+  Phase 0/7 spikes were re-attempted here. They're unblocked, not done.
 - **Tailwind 4 uses CSS-first config — there is no `tailwind.config.ts`.** The plan
   (doc 01 §7.5) describes the token pipeline as `globals.css` ↔ `tailwind.config.ts` ↔
   `editor.settings`. Tailwind v4's actual mechanism is a `@theme inline { }` block

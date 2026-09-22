@@ -2,7 +2,7 @@
 
 import { Content, isPreviewing } from "@builder.io/sdk-react";
 import type { BuilderContent } from "@builder.io/sdk-react";
-import "@/builder-registry";
+import { CUSTOM_COMPONENTS } from "@/builder-registry";
 import { BUILDER_API_KEY } from "@/lib/builder-config";
 
 interface RenderBuilderContentProps {
@@ -24,5 +24,12 @@ export function RenderBuilderContent({
     return null;
   }
 
-  return <Content content={content} model={model} apiKey={BUILDER_API_KEY} />;
+  return (
+    <Content
+      content={content}
+      model={model}
+      apiKey={BUILDER_API_KEY}
+      customComponents={CUSTOM_COMPONENTS}
+    />
+  );
 }

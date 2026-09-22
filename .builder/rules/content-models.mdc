@@ -1,0 +1,60 @@
+---
+description: The 14 Fieldnote content models — fields, kinds, and data shape gotchas
+globs:
+alwaysApply: false
+---
+
+# Content models
+
+14 models in the `Fieldnote` space, `main` environment. This build skips the
+lower-environment MCP-write workflow other Builder docs describe (see
+`CLAUDE.md`'s resolved decisions). Treat this table as a map, not the source
+of truth — query `get_model_schema` / `browse_model_content` over the CMS MCP
+for the exact current fields before depending on one that isn't listed here.
+
+| Model | Kind | Purpose | Key fields |
+|---|---|---|---|
+| `page` | page | Generic catch-all | `blocks`, `title`, `seoTitle`, `seoDescription`, `ogImage`, `noindex` |
+| `landing-page` | page | Campaign pages | `blocks`, `title`, `campaignCode`, required end date |
+| `homepage` | component | Mounted at `/` | `blocks`, `seoTitle`, `seoDescription` |
+| `nav` | component | Global header | `blocks` (Symbol-driven) |
+| `footer` | component | Global footer | `blocks` — Builder-driven, never hardcoded |
+| `promo-slot` | component | Named slots | `blocks`, `slotId` enum: `pdp-upper` / `plp-tile` / `cart-upsell` / `global-banner` |
+| `pdp-section` | component | Below-fold PDP | `blocks`, `previewProduct` (reference → `product`) |
+| `article` | component | Help/blog/pro | structured fields **and** `blocks` — see below |
+| `product` | data | Catalog | `sku`, `name`, `slug`, `price`, `compareAtPrice`, `currency`, `images[]`, `category` (enum), `collections[]`, `colors[]`, `sizes[]`, `badges[]`, `description` (richText, localized), `shortDescription`/`materials` (localized), `inStock`, `launchDate`, `proOnly` |
+| `author` | data | Bylines | `name`, `title`, `bio` — referenced from `article.author` |
+| `help-topic` | data | KB taxonomy | referenced from `article.topic` |
+| `store` | data | Retail locations | address, coords, hours, locale |
+| `disclosure` | data | Regulated legal text | `key`, `body` (localized), `jurisdiction`, `effectiveDate` — gates Legal Review |
+| `nav-config` | data | Nav labels + mega-menu | fully localized |
+
+## Why `article` is a component model, not a data model
+
+A `data` model cannot hold a `uiBlocks` field — Data models are pure structured
+data with no drag-and-drop aspect. `article` needs both structured fields
+(title, author, SEO/AEO fields) *and* a visual body, so it's a `component`
+(section) model with a `blocks` field alongside the structured ones. This is
+the documented blueprint shape, not a workaround.
+
+## Data shapes worth knowing before writing a fetch or a query
+
+- **Reference field data:** `{"@type": "@builder.io/core:Reference", "id":
+  "<content-id>", "model": "<model-name>"}`. List queries should pass `omit:
+  "data.blocks"` to avoid pulling every entry's full block tree; detail
+  queries need `includeRefs: true` to resolve `author`/`topic`/etc.
+- **Localized field data:** `{"@type": "@builder.io/core:LocalizedValue",
+  "Default": "...", "fr-FR": "..."}`. You must pass `locale` on the fetch
+  (`fetchOneEntry({ ..., locale: "fr-FR" })`) or a localized field renders as
+  literal `[object Object]` on the page — there's no silent correct fallback.
+- **Draft vs. published:** `fetchOneEntry` only returns published content by
+  default. An entry in draft returns `null` from a normal fetch — that's not a
+  bug, it's the same mechanism that keeps unpublished/Legal-Review-gated
+  content off the live site. `includeUnpublished: true` exists for
+  diagnostics/preview use only — never leave it on in code that runs against
+  production traffic.
+- **Field-type → MCP mapping that's confirmed working:** `text`, `longText`,
+  `richText` (HTML body), `number`, `boolean`, `date`, `file`, `color`, `enum`
+  (with an `enum` array), `list` (with `subFields`), `object` (with
+  `subFields`), `reference` (with `model: "<target-model-name>"`). Fields take
+  a `localized: true` flag.
