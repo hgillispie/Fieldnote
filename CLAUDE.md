@@ -77,14 +77,24 @@ the correction.
    testing, Insights, custom targeting, governance, environments, impressions,
    localization and scheduler are all available.
 
-## GitHub push is currently blocked
+## GitHub push — resolved (2026-09-22, session 2)
 
-`git push` to `origin/claude/sweet-ritchie-2b658u` fails with a 403 — Claude's GitHub
-App isn't installed/authorized for `hgillispie/Fieldnote`. This is **not a network
-error, don't retry it** — Hunter (or an org admin) needs to install the app at
-https://github.com/apps/claude/installations/select_target or reconnect GitHub from
-claude.ai settings. Commits are made locally each phase regardless; push once this is
-fixed.
+Claude's GitHub App still isn't installed/authorized for `hgillispie/Fieldnote`
+(the original 403), but Hunter worked around it with a fine-grained PAT instead:
+`GITHUB_TOKEN` in `.env.local` (gitignored, never committed), used via `gh auth
+login --with-token` + `gh auth setup-git` to wire git's own credential helper —
+plain `git push` works after that, no per-push token handling needed.
+
+Getting the scope right took three tokens: the first was denied entirely
+(`Permission ... denied` — fine-grained PATs need the repo explicitly selected
+with the right permissions, unlike classic PATs' account-wide scopes), the
+second had repo write but was rejected specifically for touching
+`.github/workflows/ci.yml` (GitHub requires the separate **Workflows**
+permission to create/modify workflow files via a PAT — **Contents: Read and
+write** alone isn't enough), the third had both and pushed clean. If push ever
+403s again: check the token's fine-grained permissions before assuming it's the
+GitHub App issue again — they produce different error text (compare "Permission
+... denied" / "without `workflow` scope" against a plain 403 with no detail).
 
 ## Stack decisions and why
 
