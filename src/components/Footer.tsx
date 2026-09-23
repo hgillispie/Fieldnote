@@ -1,8 +1,11 @@
 import Link from "next/link";
 
-// Hardcoded alongside Navbar — see that file for why. Same reasoning: a
-// marketer shouldn't be able to change brand/legal chrome that appears on
-// every page underneath them.
+// ENTERPRISE PATTERN: SECTION MODELS — hardcoded alongside Navbar; see the
+// full comment block in `src/components/Navbar.tsx` for the section-models-
+// vs-hardcoded-chrome tradeoff this pairs with (reusable `promo-slot`/
+// `pdp-section` Builder section models vs. zero-editorial-risk code chrome).
+// Same reasoning here: a marketer shouldn't be able to change brand/legal
+// chrome that appears on every page underneath them.
 export function Footer() {
   return (
     <footer className="border-t border-sand bg-surface-alt">

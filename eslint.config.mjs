@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Separate Builder plugin package — its own toolchain/dependencies
+    // (@builder.io/react), not part of this app's build. See
+    // plugins/cloudinary-picker/README.md.
+    "plugins/**",
   ]),
 ]);
 

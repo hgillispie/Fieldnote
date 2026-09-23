@@ -22,6 +22,101 @@
  * Skip either half and the component silently no-ops — no error, just a
  * console warning ("Could not find a registered component named X") and a
  * blank space where it should render.
+ *
+ * ENTERPRISE PATTERN: COMPONENT REGISTRATION
+ *
+ * Every input schema below is deliberately shaped, not just "whatever field
+ * types happened to work":
+ *   - `enum` inputs (rendered as a dropdown via `type: "text"` + an `enum`
+ *     array — there is no separate `"enum"` input type on this SDK) are used
+ *     everywhere a component has a small, fixed set of *design-system*
+ *     variants (Hero's `variant`, Section's `width`/`padding`/`background`).
+ *     This is a governance choice as much as a UX one: a marketer picks from
+ *     a closed set that a designer/engineer defined, instead of typing a
+ *     raw class name or hex value into a free-text field. Multiply that by
+ *     an org with dozens of content editors across brands and this is what
+ *     keeps a component's rendered output from drifting into one-off,
+ *     unmaintainable states.
+ *   - `showIf` (a real predicate function over `Map<string, unknown>`, not a
+ *     string expression — the SDK serializes functions for editor-iframe
+ *     transport, so this is fully supported, not a hack) is used to hide
+ *     inputs that don't apply to the selected mode (e.g. `ProductCard`'s
+ *     static-field inputs only show when `source === "static"`). At scale,
+ *     this is what keeps a component's options panel from becoming a wall of
+ *     30 fields where only 6 apply to any given instance.
+ *   - `required: true` + `helperText` (see Hero's `heroImageAlt`) is how a
+ *     content-governance rule gets enforced at the schema level instead of
+ *     relying on editors reading a style guide. `heroImageAlt` is named
+ *     *exactly* that, not `imageAlt` or `altText`, because a downstream
+ *     accessibility-governance check keys off that exact field name when
+ *     scanning `Hero` blocks — the input name is itself part of the contract.
+ *
+ * WHY THERE'S NO `isRSC` FLAG HERE
+ * `sdk-react-nextjs` (the newer, still-0.x Next.js-specific SDK) supports an
+ * `isRSC: true` flag on `ComponentInfo` so a registered component can be a
+ * genuine React Server Component with zero client JS shipped for it. This
+ * app deliberately uses `@builder.io/sdk-react` (Gen 2) instead — see
+ * AGENTS.md and CLAUDE.md for the full reasoning — and that SDK's `register`
+ * has no `isRSC` option at all: every component registered here is a Client
+ * Component by construction, and `<Content>` itself only renders client-side.
+ * That's a real SDK-level trade-off (more client JS shipped than an RSC-first
+ * setup would need), not a Builder-the-product limitation — don't tell a
+ * prospect evaluating Builder that Builder can't do RSC; tell them this
+ * specific SDK choice trades RSC support for Gen 2's broader interactive-
+ * feature support, and `sdk-react-nextjs` is the other point on that curve.
+ *
+ * HOW A REAL ORG SPLITS THIS PAST ~50 COMPONENTS
+ * One flat `CUSTOM_COMPONENTS` array in one file is exactly right at this
+ * app's size (13 components, one team, one brand). It stops being right long
+ * before an org reaches 50+ components across multiple product teams and
+ * multiple brands sharing a design system, for reasons that show up in order:
+ *   1. Merge conflicts — every team editing the same array in the same file
+ *      on every PR.
+ *   2. Ownership — a "Checkout" team's components and a "Content/Marketing"
+ *      team's components have different release cadences and different
+ *      reviewers; one file can't express that.
+ *   3. Bundle size — every component in `CUSTOM_COMPONENTS` ships to every
+ *      page's client bundle regardless of whether that page uses it, unless
+ *      the registration itself is code-split.
+ * The standard fix is to push component *ownership* into per-team or
+ * per-package registries that each export their own
+ * `RegisteredComponent[]`, and have this file (or a thin equivalent) do
+ * nothing but import and concatenate them:
+ *
+ *   // packages/checkout-components/src/registry.ts
+ *   export const CHECKOUT_COMPONENTS: RegisteredComponent[] = [ ... ];
+ *
+ *   // packages/marketing-components/src/registry.ts
+ *   export const MARKETING_COMPONENTS: RegisteredComponent[] = [ ... ];
+ *
+ *   // apps/fieldnote-web/src/builder-registry.ts
+ *   import { CHECKOUT_COMPONENTS } from "@fieldnote/checkout-components";
+ *   import { MARKETING_COMPONENTS } from "@fieldnote/marketing-components";
+ *   export const CUSTOM_COMPONENTS = [...CHECKOUT_COMPONENTS, ...MARKETING_COMPONENTS];
+ *
+ * Each package versions and tests independently; a design-system team can
+ * own a shared base package (tokens, primitives) that every product-team
+ * package depends on; and a multi-brand org (think a retail holding company
+ * with 6 storefronts on one Builder space setup) can have each brand's app
+ * import only the packages relevant to it, keeping bundles lean. The
+ * unconditional-registration rule (below, and in AGENTS.md) still applies to
+ * every one of those packages individually — none of them should ever gate
+ * their `register()` calls on `editingModel`.
+ *
+ * HOW DESIGN TOKENS FLOW INTO COMPONENT DEFAULTS
+ * The `editor.settings.designTokens` call at the bottom of this file (colors,
+ * font family, font size — all `var(--fn-*, fallback)`) is what populates
+ * Builder's Style tab token picker; `styleStrictMode: true` +
+ * `allowOverridingTokens: false` means that picker is the *only* way to set
+ * color/font/size in the Visual Editor — no arbitrary hex values. Component
+ * `defaultValue`s (e.g. Section's `background: "surface"`) are a second,
+ * complementary layer: they set which *token* a freshly-dragged-in component
+ * starts on, so a new instance already matches the design system before an
+ * editor touches anything. Change a value in `src/app/globals.css`'s
+ * `:root`/`@theme inline` block and both layers move together automatically
+ * — the token *name* (`surface`, `primary`, ...) referenced here in
+ * `defaultValue`s and `enum`s never needs to change, only its underlying
+ * value does. See `.builder/rules/tokens.mdc` for the full three-way binding.
  */
 import { register } from "@builder.io/sdk-react";
 import type { RegisteredComponent } from "@builder.io/sdk-react";
@@ -82,6 +177,27 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
         required: true,
         helperText:
           "Required — gated by the accessibility workflow rule on Hero images.",
+        showIf: (options: Map<string, unknown>) => options.get("variant") !== "text",
+      },
+      // ENTERPRISE PATTERN: DAM COEXISTENCE (Builder Asset Manager + Cloudinary)
+      //
+      // An optional, secondary image source alongside `heroImage` above.
+      // `heroImage` (type: "file") stays the default, Builder-Asset-Manager-
+      // backed path every other image input in this file uses; this field
+      // exists specifically to demonstrate the coexistence pattern for a
+      // customer with an existing Cloudinary library — see the large
+      // top-of-file comment in `plugins/cloudinary-picker/plugin.tsx` for
+      // the full "why," and that package's README for why this field type
+      // needs a one-time manual Builder Space Settings registration step
+      // before its picker UI renders in the editor (until then it falls
+      // back to Builder's generic "unrecognized custom type" UI, which is
+      // expected, not a bug in this registration). When set, `Hero.tsx`
+      // prefers this image over `heroImage`.
+      {
+        name: "cloudinaryImage",
+        type: "cloudinaryImage",
+        helperText:
+          "Optional — pick an asset from the existing Cloudinary library instead of Builder's Asset Manager. Overrides the image above when set.",
         showIf: (options: Map<string, unknown>) => options.get("variant") !== "text",
       },
     ],
@@ -234,6 +350,12 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
       {
         name: "apiUrl",
         type: "url",
+        // Defaults to the mock-Shopify-backed Route Handler (pattern 2 —
+        // see the top-of-file ENTERPRISE PATTERN block and
+        // src/app/api/shopify-products/route.ts). Point this at any other
+        // JSON endpoint to demo a different commerce/PIM backend without
+        // touching this component's code.
+        defaultValue: "/api/shopify-products",
         helperText: "Endpoint returning a JSON array of products.",
         showIf: (options: Map<string, unknown>) => options.get("source") !== "builder",
       },
