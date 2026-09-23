@@ -29,6 +29,7 @@ import { Hero } from "@/components/builder/Hero";
 import { Section } from "@/components/builder/Section";
 import { ProductCard } from "@/components/builder/ProductCard";
 import { ProductGrid } from "@/components/builder/ProductGrid";
+import { FeatureCards } from "@/components/builder/FeatureCards";
 
 export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
   {
@@ -228,6 +229,76 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
         type: "url",
         helperText: "Endpoint returning a JSON array of products.",
         showIf: (options: Map<string, unknown>) => options.get("source") !== "builder",
+      },
+    ],
+  },
+  {
+    component: FeatureCards,
+    name: "FeatureCards",
+    group: "Fieldnote",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23F7F5F1'/%3E%3Crect x='5' y='9' width='9' height='11' rx='2' fill='%23FFFFFF' stroke='%235C6670'/%3E%3Crect x='15.5' y='9' width='9' height='11' rx='2' fill='%23FFFFFF' stroke='%235C6670'/%3E%3Crect x='26' y='9' width='9' height='11' rx='2' fill='%23FFFFFF' stroke='%235C6670'/%3E%3Ccircle cx='9.5' cy='13' r='1.6' fill='%23D4622A'/%3E%3Ccircle cx='20' cy='13' r='1.6' fill='%23D4622A'/%3E%3Ccircle cx='30.5' cy='13' r='1.6' fill='%23D4622A'/%3E%3C/svg%3E",
+    noWrap: true,
+    inputs: [
+      {
+        name: "heading",
+        type: "text",
+        defaultValue: "Why gear up with Fieldnote",
+        helperText: "Heading shown above the cards.",
+      },
+      {
+        name: "columns",
+        type: "text",
+        enum: ["2", "3", "4"],
+        defaultValue: "3",
+        helperText: "Number of grid columns at desktop width.",
+      },
+      {
+        name: "cards",
+        type: "list",
+        defaultValue: [
+          {
+            icon: "shield",
+            title: "Lifetime repair guarantee",
+            description:
+              "Every Fieldnote piece is backed by free repairs for as long as you own it — rips, zippers, seams, all of it.",
+          },
+          {
+            icon: "truck",
+            title: "Free shipping over $75",
+            description:
+              "Standard shipping is free on orders over $75, with expedited options at checkout for trip-week orders.",
+          },
+          {
+            icon: "mountain",
+            title: "Field-tested, not lab-tested",
+            description:
+              "Every product spends a season with our guides on real trails before it ships to you.",
+          },
+        ],
+        subFields: [
+          {
+            name: "icon",
+            type: "text",
+            enum: ["compass", "mountain", "shield", "truck", "leaf", "tag"],
+            defaultValue: "compass",
+            helperText: "Used unless an image is set below.",
+          },
+          {
+            name: "image",
+            type: "file",
+            allowedFileTypes: ["jpeg", "jpg", "png", "webp", "svg"],
+            helperText: "Optional — overrides the icon when set.",
+          },
+          { name: "title", type: "text", defaultValue: "Feature title" },
+          {
+            name: "description",
+            type: "longText",
+            defaultValue: "A short description of this feature or benefit.",
+          },
+          { name: "linkLabel", type: "text" },
+          { name: "linkHref", type: "url" },
+        ],
       },
     ],
   },
