@@ -33,6 +33,7 @@ import { FeatureCards } from "@/components/builder/FeatureCards";
 import { RichText } from "@/components/builder/RichText";
 import { Accordion } from "@/components/builder/Accordion";
 import { SearchBox } from "@/components/builder/SearchBox";
+import { Disclosure } from "@/components/builder/Disclosure";
 
 export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
   {
@@ -395,6 +396,34 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
         defaultValue: "Search jackets, packs, boots...",
         helperText:
           "Filters the local product catalog client-side (name + category). Algolia isn't configured yet — this is a real, working filter, not a stub.",
+      },
+    ],
+  },
+  {
+    component: Disclosure,
+    name: "Disclosure",
+    group: "Fieldnote",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23F7F5F1'/%3E%3Crect x='7' y='9' width='26' height='16' rx='2' fill='%23FFFFFF' stroke='%235C6670'/%3E%3Crect x='11' y='13' width='18' height='2' fill='%235C6670'/%3E%3Crect x='11' y='17' width='18' height='2' fill='%235C6670'/%3E%3Ccircle cx='30' cy='28' r='6' fill='%23D4622A'/%3E%3Cpath d='M30 25v3.5l2 2' stroke='%23FFFFFF' stroke-width='1.3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E",
+    noWrap: true,
+    inputs: [
+      {
+        name: "disclosure",
+        type: "reference",
+        model: "disclosure",
+        helperText: "Resolves body, jurisdiction, effective date and version from the referenced disclosure entry.",
+      },
+      {
+        name: "collapsed",
+        type: "boolean",
+        defaultValue: true,
+        helperText: "When on, renders as click-to-expand; when off, the disclosure text is always visible.",
+      },
+      {
+        name: "label",
+        type: "text",
+        defaultValue: "View important disclosures",
+        helperText: "Clickable summary text shown when collapsed.",
       },
     ],
   },
