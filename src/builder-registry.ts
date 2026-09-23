@@ -30,6 +30,7 @@ import { Section } from "@/components/builder/Section";
 import { ProductCard } from "@/components/builder/ProductCard";
 import { ProductGrid } from "@/components/builder/ProductGrid";
 import { FeatureCards } from "@/components/builder/FeatureCards";
+import { RichText } from "@/components/builder/RichText";
 
 export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
   {
@@ -299,6 +300,30 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
           { name: "linkLabel", type: "text" },
           { name: "linkHref", type: "url" },
         ],
+      },
+    ],
+  },
+  {
+    component: RichText,
+    name: "RichText",
+    group: "Fieldnote",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23FFFFFF' stroke='%23E8DFD2' stroke-width='2'/%3E%3Crect x='8' y='10' width='24' height='3' fill='%2314161A'/%3E%3Crect x='8' y='17' width='24' height='2.5' fill='%235C6670'/%3E%3Crect x='8' y='22' width='24' height='2.5' fill='%235C6670'/%3E%3Crect x='8' y='27' width='15' height='2.5' fill='%23D4622A'/%3E%3C/svg%3E",
+    noWrap: true,
+    inputs: [
+      {
+        name: "content",
+        type: "richText",
+        defaultValue:
+          "<p>Every Fieldnote jacket, pack and boot goes through the same test before it ships: a season in the hands of our own guides, on the actual trips we sell you on.</p><p>That's the difference between gear that looks rugged on a shelf and gear that <strong>holds up on day nine of a ten-day traverse</strong> \u2014 worn, rained on, and packed away wet more times than we'd like to admit.</p><p>Read more about how we source materials and test in the field on our <a href=\"/sustainability\">sustainability page</a>.</p>",
+        helperText: "Rendered as sanitized HTML \u2014 all output is passed through DOMPurify.",
+      },
+      {
+        name: "width",
+        type: "text",
+        enum: ["narrow", "default", "wide"],
+        defaultValue: "default",
+        helperText: "Constrains the line length of long-form copy.",
       },
     ],
   },
