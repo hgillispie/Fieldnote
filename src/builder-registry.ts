@@ -28,6 +28,7 @@ import type { RegisteredComponent } from "@builder.io/sdk-react";
 import { Hero } from "@/components/builder/Hero";
 import { Section } from "@/components/builder/Section";
 import { ProductCard } from "@/components/builder/ProductCard";
+import { ProductGrid } from "@/components/builder/ProductGrid";
 
 export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
   {
@@ -178,6 +179,59 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
         type: "text",
         defaultValue: "Best Seller",
         showIf: (options: Map<string, unknown>) => options.get("source") === "static",
+      },
+    ],
+  },
+  {
+    component: ProductGrid,
+    name: "ProductGrid",
+    group: "Fieldnote",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23FFFFFF' stroke='%23E8DFD2' stroke-width='2'/%3E%3Crect x='6' y='7' width='11' height='11' fill='%231B3A2F'/%3E%3Crect x='23' y='7' width='11' height='11' fill='%23D4622A'/%3E%3Crect x='6' y='22' width='11' height='11' fill='%23D4622A'/%3E%3Crect x='23' y='22' width='11' height='11' fill='%231B3A2F'/%3E%3C/svg%3E",
+    noWrap: true,
+    inputs: [
+      {
+        name: "source",
+        type: "text",
+        enum: ["builder", "shopify", "api"],
+        defaultValue: "builder",
+        helperText:
+          "builder uses the products list below; shopify/api fetch client-side from apiUrl. All three fall back to a static product set if the source is empty or fails.",
+      },
+      {
+        name: "columns",
+        type: "text",
+        enum: ["2", "3", "4"],
+        defaultValue: "3",
+      },
+      { name: "heading", type: "text", defaultValue: "Shop the collection" },
+      {
+        name: "products",
+        type: "list",
+        subFields: [
+          { name: "name", type: "text", defaultValue: "Cascade 3L Shell" },
+          { name: "price", type: "number", defaultValue: 389 },
+          { name: "currency", type: "text", defaultValue: "USD" },
+          {
+            name: "image",
+            type: "file",
+            allowedFileTypes: ["jpeg", "jpg", "png", "webp"],
+          },
+          {
+            name: "imageAlt",
+            type: "text",
+            defaultValue: "Cascade 3L Shell rain jacket in forest green",
+          },
+          { name: "href", type: "url", defaultValue: "/products/cascade-3l-shell" },
+          { name: "badge", type: "text" },
+        ],
+        showIf: (options: Map<string, unknown>) => options.get("source") === "builder",
+      },
+      {
+        name: "apiUrl",
+        type: "url",
+        helperText: "Endpoint returning a JSON array of products.",
+        showIf: (options: Map<string, unknown>) => options.get("source") !== "builder",
       },
     ],
   },
