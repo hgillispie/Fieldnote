@@ -15,21 +15,26 @@ interface GridProduct {
   badge?: string;
 }
 
-interface BuilderListProduct {
-  name?: string;
-  price?: number;
-  currency?: string;
-  image?: string;
-  imageAlt?: string;
-  href?: string;
-  badge?: string;
+interface ReferencedProduct {
+  data?: {
+    name?: string;
+    price?: number;
+    currency?: string;
+    slug?: string;
+    images?: Array<{ image?: string }>;
+    badges?: Array<{ badge?: string }>;
+  };
+}
+
+interface BuilderListItem {
+  product?: ReferencedProduct | null;
 }
 
 interface ProductGridProps {
   source?: ProductGridSource;
   columns?: ProductGridColumns;
   heading?: string;
-  products?: BuilderListProduct[];
+  products?: BuilderListItem[];
   apiUrl?: string;
   attributes?: Record<string, unknown>;
 }
@@ -84,17 +89,41 @@ function formatPrice(price: number, currency: string) {
   }).format(price);
 }
 
-function toGridProducts(items: BuilderListProduct[]): GridProduct[] {
+function toGridProducts(items: BuilderListItem[]): GridProduct[] {
   return items
-    .filter((item) => item.name && typeof item.price === "number" && item.href)
+    .map((item) => item.product?.data)
+    .filter(
+      (data): data is NonNullable<typeof data> =>
+        !!data?.name && typeof data.price === "number",
+    )
+    .map((data) => ({
+      name: data.name as string,
+      price: data.price as number,
+      currency: data.currency ?? "USD",
+      image: data.images?.[0]?.image,
+      imageAlt: data.name as string,
+      href: data.slug ? `/products/${data.slug}` : "/shop",
+      badge: data.badges?.[0]?.badge,
+    }));
+}
+
+function fromApiResponse(data: unknown): GridProduct[] {
+  if (!Array.isArray(data)) return [];
+  return data
+    .filter(
+      (item): item is { name: string; price: number; href: string } & Record<string, unknown> =>
+        typeof item?.name === "string" &&
+        typeof item?.price === "number" &&
+        typeof item?.href === "string",
+    )
     .map((item) => ({
-      name: item.name as string,
-      price: item.price as number,
-      currency: item.currency ?? "USD",
-      image: item.image,
-      imageAlt: item.imageAlt ?? (item.name as string),
-      href: item.href as string,
-      badge: item.badge,
+      name: item.name,
+      price: item.price,
+      currency: typeof item.currency === "string" ? item.currency : "USD",
+      image: typeof item.image === "string" ? item.image : undefined,
+      imageAlt: typeof item.imageAlt === "string" ? item.imageAlt : item.name,
+      href: item.href,
+      badge: typeof item.badge === "string" ? item.badge : undefined,
     }));
 }
 
@@ -126,7 +155,7 @@ export function ProductGrid({
       })
       .then((data) => {
         if (cancelled) return;
-        const items = toGridProducts(Array.isArray(data) ? data : []);
+        const items = fromApiResponse(data);
         setRemoteItems(items.length > 0 ? items : null);
       })
       .catch(() => {
