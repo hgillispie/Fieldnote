@@ -72,6 +72,31 @@ to be statically cached, not because it resolves the prerender failure. It's the
 sanctioned exception to the "no `force-dynamic` anywhere" non-negotiable below — a runtime
 error boundary is not a content/ISR route.
 
+## Resolved: `npm run typecheck` failed in CI only (`LayoutProps` not found)
+
+**2026-09-23, PR #1 CI run.** `npm run typecheck` failed on a clean GitHub Actions
+checkout with `src/app/layout.tsx: Cannot find name 'LayoutProps'`, despite passing in
+every local dev-container run throughout the 9-component build session. Root cause,
+confirmed by inspection: `LayoutProps<Route>` is a **global ambient type Next.js
+generates**, written to `.next/types/routes.d.ts` (and referenced transitively via the
+also-generated, also-gitignored `next-env.d.ts`) — it only exists after `next dev`,
+`next build`, or `next typegen` has run at least once. `.next/` is correctly gitignored,
+so a fresh `actions/checkout` + `npm ci` with no prior Next.js invocation genuinely has no
+`LayoutProps` type on disk. Local runs never hit this because a dev server had been
+running continuously all session, so the generated file was already sitting on disk.
+
+**Fixed at the source, not by adding a CI generation step.** `src/app/layout.tsx`'s root
+layout only ever used `children` — no dynamic route params, no parallel-route slots — so
+depending on the generated `LayoutProps<"/">` bought nothing. Replaced it with a plain
+local `interface RootLayoutProps { children: ReactNode }`, removing the dependency on
+`.next/types` entirely rather than teaching CI to run `next typegen` (or a full `next
+build`) before `tsc --noEmit`. Verified by simulating a fully clean checkout locally —
+deleted `.next/`, `next-env.d.ts`, and `tsconfig.tsbuildinfo` (all three gitignored,
+generated files) and re-ran `npm run typecheck`: passes clean with none of them present,
+matching exactly what CI's `actions/checkout` + `npm ci` produces. No other file in the
+repo references `LayoutProps`, `PageProps<...>`, or `ParamsOf<...>` (checked), so this was
+the only occurrence.
+
 ## Source of truth
 
 Five planning docs in `docs/` (not `docs/plan/` — that path doesn't exist in this repo):
