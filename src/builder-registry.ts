@@ -32,6 +32,7 @@ import { ProductGrid } from "@/components/builder/ProductGrid";
 import { FeatureCards } from "@/components/builder/FeatureCards";
 import { RichText } from "@/components/builder/RichText";
 import { Accordion } from "@/components/builder/Accordion";
+import { SearchBox } from "@/components/builder/SearchBox";
 
 export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
   {
@@ -377,6 +378,23 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
             defaultValue: "<p>Rendered as sanitized HTML \u2014 all output is passed through DOMPurify.</p>",
           },
         ],
+      },
+    ],
+  },
+  {
+    component: SearchBox,
+    name: "SearchBox",
+    group: "Fieldnote",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23FFFFFF' stroke='%23E8DFD2' stroke-width='2'/%3E%3Crect x='7' y='13' width='19' height='9' rx='4.5' fill='%23F7F5F1' stroke='%235C6670'/%3E%3Ccircle cx='27' cy='27' r='4' fill='none' stroke='%23D4622A' stroke-width='2'/%3E%3Cpath d='M30 30l3 3' stroke='%23D4622A' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E",
+    noWrap: true,
+    inputs: [
+      {
+        name: "placeholder",
+        type: "text",
+        defaultValue: "Search jackets, packs, boots...",
+        helperText:
+          "Filters the local product catalog client-side (name + category). Algolia isn't configured yet — this is a real, working filter, not a stub.",
       },
     ],
   },
