@@ -214,14 +214,42 @@ entries in draft rather than publishing them now. Rationale: `blocks: []` means
 nothing would look different either way, and publishing becomes meaningful once
 Phase 3b gives entries real content — publishing now would just be redone then.
 
-**Discrepancy found, not yet resolved:** searching for existing `product` model
-entries (`search_builder_content`, `search_content_ids`, `browse_model_content`,
-various search terms, `includeDrafts: true`) turned up **zero** — despite Phase
-3a's note above claiming 2–3 skeleton entries per model including `product`.
-Either the `product` model never actually got its skeleton entries, or they
-exist under names/terms that didn't match anything searched. Worth a direct
-check before Phase 3b assumes it's starting from skeleton entries rather than
-zero.
+**Discrepancy resolved 2026-09-23 — false alarm.** The `product` model was never
+actually empty. Checking the real Builder UI directly (logged in via browser,
+after almost editing the wrong org — see the John Hancock note below) showed
+**3 real, non-lorem skeleton products already exist**: `Traverse Mid GTX`,
+`Longhaul 45L Pack`, `Cascade 3L Shell` — all seed-spec sample names, all
+`Draft` status, sitting in `main`. They also appear in `dev` (both `staging`
+and `dev` environments do exist, contrary to an earlier assumption — see
+below), marked `Linked`, i.e. mirrored from `main` via Live Sync, not a
+separate copy. **Root cause of the earlier "zero entries" finding:**
+`get_content` and `browse_model_content` only ever return **published**
+content with no way to include drafts, and every `includeDrafts: true` search
+I tried (`search_builder_content`, `search_content_ids`) used generic terms
+("product", "FN", "New") that never happened to match these entries' actual
+names. Lesson: a `browse_model_content`/`get_content` zero-result on this
+space means "zero published," never "zero total" — always cross-check with a
+draft-inclusive search using the entry's *actual* name before concluding
+content doesn't exist. **No action taken** — nothing needed creating or
+pushing; the skeleton content was already exactly what Phase 3a intended.
+
+**Environments exist; the MCP connector can't reach them.** `dev` and
+`staging` are both real, existing environments in the Fieldnote space (visible
+via the environment switcher in the Builder UI) — Phase 0's checklist marked
+this "see open question #1" and it was never actually confirmed either way
+until now. None of the CMS MCP tools (`who_am_i`, `list_builder_models`,
+`get_content`, `browse_model_content`, `search_builder_content`,
+`search_content_ids`) expose an environment parameter or a way to list
+environments — the MCP connection is bound to `main` only. Any future "check
+`dev`" task needs the actual Builder UI (browser), not the MCP tools.
+
+**⚠️ Org mix-up, worth knowing about for any future browser session:**
+logging into Builder in the browser landed on **"John Hancock Organization" →
+"Content POC"** by default — a real, unrelated customer workspace, not
+Fieldnote. Caught it before clicking into any content there and had Hunter
+switch orgs manually rather than navigating around it myself. **Always verify
+the org/space name after any fresh Builder login, before doing anything else**
+— the account has access to other orgs, and Fieldnote is not the default.
 
 **Not done yet in Phase 1:** none — `/demo-switcher` and CI both done, see below.
 
@@ -295,6 +323,45 @@ so Builder Code doesn't repeat this silently when it adds the remaining 9.
   Code has no access to that UI, so this is still **Hunter's action item**,
   same as "turn off Enforce default command restrictions" and "connect
   Builder Code to the repo" (doc 07 §4/§2).
+
+### Token pipeline — end-to-end verification (2026-09-23, session 3)
+
+Requested explicitly: change one value in `globals.css`, confirm the app, a
+Tailwind class, and the Builder token picker all move. Two of three legs
+verified live; the third hit a genuine tooling wall, not a code problem.
+
+- **App + Tailwind class: ✅ verified live.** Changed `--fn-color-accent` from
+  `#d4622a` to `#ff00ff` in `globals.css`, reloaded `/demo-switcher` (which
+  uses `text-accent` on its "Internal tool" label — no Builder content
+  dependency needed), and read the computed style directly:
+  `getComputedStyle(document.documentElement).getPropertyValue('--fn-color-accent')`
+  returned `#f0f` and the label's computed `color` was exactly `rgb(255, 0,
+  255)`. Reverted immediately after. This confirms the `globals.css` →
+  `@theme inline` → Tailwind utility chain resolves live, not from a cached or
+  build-time value.
+- **Builder's design-token picker: ⚠️ blocked by browser sandboxing, not
+  confirmed either way.** `register("editor.settings", { designTokens: {...}
+  })` in `builder-registry.ts` is correctly wired (same postMessage mechanism
+  as `register("component", ...)` — see the `customComponents` finding above
+  — it only takes effect once the app is actually loaded inside Builder's
+  Visual Editor iframe). Calling the MCP's `get_design_tokens` tool confirmed
+  this handshake has **never** happened: it returned completely empty
+  (`"space": null, "vcp": []`, hint: *"Register design tokens via the Builder
+  SDK..."*), meaning Builder has no record of these tokens at all yet.
+  Attempting to open the Homepage entry's real Visual Editor (with Hunter
+  logged into the browser pane) to trigger that handshake failed with
+  `net::ERR_BLOCKED_BY_CLIENT` on every request from `https://builder.io` to
+  `http://localhost:3000` — a browser-level block (consistent with Chrome's
+  Private Network Access protections against a remote origin reaching a
+  local address), not a bug in the registration code, not a Builder bug, and
+  not fixable by retrying. **This is specific to the sandboxed browser tool
+  used this session** — direct top-level navigation to `localhost:3000` works
+  fine in the same tool; only a *remote page iframing/fetching* `localhost`
+  fails. **Unresolved — needs one of:** Hunter opening the same Homepage
+  editor URL in his own regular Chrome (most representative of real demo
+  usage anyway); or pointing a model's Preview URL at a real deployed HTTPS
+  URL (Vercel) instead of `localhost` once that exists, which would sidestep
+  this class of restriction entirely rather than fighting it repeatedly.
 
 ### Phase 3a — done (2026-09-22)
 
