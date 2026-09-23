@@ -1,0 +1,90 @@
+---
+description: How src/builder-registry.ts works and the customComponents gotcha
+globs: src/builder-registry.ts,src/components/RenderBuilderContent.tsx
+alwaysApply: true
+---
+
+# The Builder registry
+
+One file, client-side: `src/builder-registry.ts` (`"use client"`). `@builder.io/
+sdk-react` cannot register React Server Components — that's this SDK's
+constraint, not a Builder-the-product limitation (`sdk-react-nextjs` supports
+RSC registration via `isRSC: true`; don't tell a prospect Builder can't do RSC).
+
+## ⚠️ `register("component", info)` alone does not render anything
+
+Confirmed by reading the SDK's compiled source: `register()` writes to an
+in-memory store that's only read to `postMessage` the Visual Editor iframe (so
+the component shows up in the insert menu and options panel). `<Content>`'s
+own render path never reads that store. Call `register("component", ...)` on
+its own and the component is fully editable in the Visual Editor — insert it,
+fill in every input — and then **renders as nothing**, with only a console
+warning to show why:
+
+```
+Could not find a registered component named "X".
+If you registered it, is the file that registered it imported by the file
+that needs to render it?
+```
+
+No error, no crash. Easy to ship without ever noticing, since the editor side
+looks completely correct.
+
+**The fix — do this for every component:**
+
+```ts
+export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
+  { component: Hero, name: "Hero", /* ...inputs, etc. */ },
+  { component: Section, name: "Section", /* ... */ },
+  // add new components here
+];
+
+for (const info of CUSTOM_COMPONENTS) {
+  register("component", info);
+}
+```
+
+```tsx
+// RenderBuilderContent.tsx
+import { CUSTOM_COMPONENTS } from "@/builder-registry";
+// ...
+<Content content={content} model={model} apiKey={apiKey} customComponents={CUSTOM_COMPONENTS} />
+```
+
+Adding a component to `CUSTOM_COMPONENTS` satisfies both halves at once. Never
+call `register("component", ...)` by itself outside that array.
+
+## Unconditional registration
+
+Every `register()` call in this file runs at module scope with no `if` guard
+of any kind — never conditioned on `builder.editingModel`, a model name, or
+anything else. The old build's #1 documented failure was gating its insert-menu
+registration on `editingModel === "homepage"`, which hid 9 components on every
+other model. There is no acceptable variant of that pattern here.
+
+## Registration call shapes
+
+- **A component:** `register("component", info)` where `info` matches
+  `ComponentInfo & { component: YourComponent }` (the `RegisteredComponent`
+  type from `@builder.io/sdk-react`). Key fields: `name`, `inputs`, `image`,
+  `noWrap`, `canHaveChildren`, `childRequirements`, `group` (groups components
+  into their own insert-menu accordion — use `group: "Fieldnote"` for anything
+  custom rather than the default "Custom Components" bucket).
+- **Editor settings** (design tokens, style strictness): `register(
+  "editor.settings", { styleStrictMode, allowOverridingTokens, designTokens })`
+  — already set up; extend `designTokens` here when adding a token (see
+  `.builder/rules/tokens.mdc`).
+- **Inputs:** `{ name, type, defaultValue, enum?, subFields?, showIf?, model? }`.
+  `type: "text"` with an `enum: [...]` array renders as a dropdown — there is
+  no separate `"enum"` input type. `showIf` takes an actual function,
+  `(options: Map<string, unknown>) => boolean`, not just a string expression —
+  the SDK serializes functions for editor transport, so a real arrow function
+  is both cleaner and fully supported. `type: "reference"` with `model:
+  "<model-name>"` renders a content picker scoped to that model.
+
+## Client boundary
+
+`RenderBuilderContent.tsx` is the one place `<Content>` renders, and the one
+place `builder-registry.ts` is imported. Pages stay Server Components that
+`fetchOneEntry(...)` and pass the result down as a prop — don't fetch inside
+the client boundary, and don't move `<Content>` outside it.

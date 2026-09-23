@@ -1,0 +1,65 @@
+---
+description: The --fn-* design token namespace and how it's wired
+globs: src/**/*.{ts,tsx,css}
+alwaysApply: true
+---
+
+# Design tokens — one namespace, three consumers
+
+Every color, font, radius, spacing and text-size value a component uses must
+resolve to one of these tokens. Never a raw hex value, never an undefined CSS
+variable. This three-way binding — one value, three places it's consumed — is
+the single highest-leverage fix versus the old build, where 30 registered
+tokens pointed at CSS variables that didn't exist anywhere.
+
+```
+src/app/globals.css        :root { --fn-color-primary: #1B3A2F; ... }
+        ↓ (@theme inline block, Tailwind v4 CSS-first config)
+Tailwind utilities          bg-primary, text-primary, font-display, text-lg, rounded-md, ...
+        ↓
+src/builder-registry.ts     editor.settings.designTokens — var(--fn-*, fallback)
+```
+
+Change a value in `globals.css` and the app, the Tailwind utility classes, and
+the Builder token picker all move together. There is no `tailwind.config.ts`
+— Tailwind 4 is CSS-first; the `@theme inline` block in `globals.css` is the
+only place the Tailwind side of this binding lives.
+
+## The token list
+
+| Token | Value | Tailwind utility |
+|---|---|---|
+| `--fn-color-primary` | `#1B3A2F` (deep forest) | `bg-primary` / `text-primary` |
+| `--fn-color-accent` | `#D4622A` (trail orange) | `bg-accent` / `text-accent` |
+| `--fn-color-sand` | `#E8DFD2` | `bg-sand` / `text-sand` |
+| `--fn-color-ink` | `#14161A` (text) | `bg-ink` / `text-ink` |
+| `--fn-color-slate` | `#5C6670` (muted text) | `bg-slate` / `text-slate` |
+| `--fn-color-surface` | `#FFFFFF` | `bg-surface` / `text-surface` |
+| `--fn-color-surface-alt` | `#F7F5F1` | `bg-surface-alt` |
+| `--fn-color-success` | `#2F6B4F` | `bg-success` / `text-success` |
+| `--fn-color-warning` | `#B8791C` | `bg-warning` / `text-warning` |
+| `--fn-color-danger` | `#A6342B` | `bg-danger` / `text-danger` |
+| `--fn-font-display` | Instrument Sans (`next/font`) | `font-display` |
+| `--fn-font-body` | Inter (`next/font`) | `font-body` |
+| `--fn-radius-sm/md/lg` | 4 / 8 / 16px | `rounded-sm/md/lg` |
+| `--fn-text-xs…4xl` | 12 / 14 / 16 / 18 / 24 / 32 / 44 / 56px | `text-xs…4xl` |
+
+Spacing has **no** `--fn-space-*` override: the seed spec's scale
+(4/8/12/16/24/32/48/64px) already equals Tailwind's default rem scale at steps
+1/2/3/4/6/8/12/16 — `p-4` already is 16px, `gap-6` already is 24px. Don't
+invent a parallel spacing token; use Tailwind's built-in spacing scale as-is.
+
+Any color/font/size a new component needs that isn't in this list should be
+added to `globals.css` (`:root` and the `@theme inline` block) and to
+`editor.settings.designTokens` in `src/builder-registry.ts` — all three, every
+time. Adding it to only one or two silently breaks the binding this file
+exists to protect.
+
+## Editor strictness
+
+`editor.settings` is currently `styleStrictMode: true, allowOverridingTokens:
+false` — the Style tab only offers these tokens, no arbitrary values. That's
+deliberate (the SiteOne/Al Tayer "token tiering" guardrail demo) — don't
+loosen it per-component. If a specific component genuinely needs an escape
+hatch, that's a space-wide settings conversation, not a per-component
+registration option.
