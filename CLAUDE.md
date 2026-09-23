@@ -9,6 +9,11 @@ This is a multi-session build. Read this file first in any new session, then the
 docs for detail. Update it whenever a decision is made, a plan assumption is confirmed
 or contradicted, or a phase completes.
 
+**Workflow (Hunter, 2026-09-23): always merge `claude/sweet-ritchie-2b658u` → `main`
+after pushing.** Don't wait to be asked each time — commit on the working branch, push
+it, then merge into `main` and push that too, every time. Verify typecheck/build on the
+merged result before pushing `main`, same as any other push.
+
 ## Source of truth
 
 Five planning docs in `docs/` (not `docs/plan/` — that path doesn't exist in this repo):
