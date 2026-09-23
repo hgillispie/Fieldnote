@@ -34,6 +34,7 @@ import { RichText } from "@/components/builder/RichText";
 import { Accordion } from "@/components/builder/Accordion";
 import { SearchBox } from "@/components/builder/SearchBox";
 import { Disclosure } from "@/components/builder/Disclosure";
+import { LeadForm } from "@/components/builder/LeadForm";
 
 export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
   {
@@ -424,6 +425,39 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
         type: "text",
         defaultValue: "View important disclosures",
         helperText: "Clickable summary text shown when collapsed.",
+      },
+    ],
+  },
+  {
+    component: LeadForm,
+    name: "LeadForm",
+    group: "Fieldnote",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23FFFFFF' stroke='%23E8DFD2' stroke-width='2'/%3E%3Crect x='8' y='9' width='24' height='4' rx='1' fill='%23F7F5F1' stroke='%235C6670'/%3E%3Crect x='8' y='16' width='24' height='4' rx='1' fill='%23F7F5F1' stroke='%235C6670'/%3E%3Crect x='8' y='25' width='13' height='6' rx='2' fill='%231B3A2F'/%3E%3C/svg%3E",
+    noWrap: true,
+    inputs: [
+      {
+        name: "heading",
+        type: "text",
+        defaultValue: "Talk to our Pro team",
+        helperText: "Heading shown above the form.",
+      },
+      {
+        name: "subheading",
+        type: "longText",
+        defaultValue:
+          "Tell us about your outfitter, guide service, or fleet and we'll follow up with trade pricing and bulk ordering options.",
+      },
+      {
+        name: "ctaLabel",
+        type: "text",
+        defaultValue: "Request trade pricing",
+      },
+      {
+        name: "endpoint",
+        type: "url",
+        helperText:
+          "No CRM is connected yet. Leave blank to simulate a real submission with a genuine success state; set a URL to POST leads there instead \u2014 no other change needed.",
       },
     ],
   },
