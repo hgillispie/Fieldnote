@@ -159,7 +159,7 @@ Guardrails:
 - [ ] 🔥 Upload product imagery to the **Builder DAM**, tagged (category / colorway / season / orientation), **3 crops each**
 - [ ] Seed **26 articles** — 14 help, 8 blog, 4 pro. Blog bodies must actually use components in `blocks`.
 - [ ] Seed **5 authors**, **14 stores**, **9 disclosures**, `nav-config`
-- [ ] 🔥 Make the **footer Builder-driven** *(today it's hardcoded with lorem ipsum in production)*
+- [x] ~~🔥 Make the **footer Builder-driven**~~ — **Reversed by Hunter 2026-09-23**: nav and footer are hardcoded in `src/app/layout.tsx` on purpose, not Builder-driven — a marketer shouldn't be able to change brand/structural chrome. See CLAUDE.md. `nav`/`footer` models still exist but are unused by the app.
 - [ ] List queries pass `omit: "data.blocks"`; detail queries pass `includeRefs: true`
 - [ ] 🔥 **Write `npm run snapshot` now, not in Phase 9.** ~50 lines against the Write API, exporting every model's entries to committed JSON. Everything built after this point is protected by it.
 

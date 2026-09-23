@@ -353,20 +353,50 @@ verified live; the third hit a genuine tooling wall, not a code problem.
   this handshake has **never** happened: it returned completely empty
   (`"space": null, "vcp": []`, hint: *"Register design tokens via the Builder
   SDK..."*), meaning Builder has no record of these tokens at all yet.
-  Attempting to open the Homepage entry's real Visual Editor (with Hunter
-  logged into the browser pane) to trigger that handshake failed with
-  `net::ERR_BLOCKED_BY_CLIENT` on every request from `https://builder.io` to
-  `http://localhost:3000` — a browser-level block (consistent with Chrome's
-  Private Network Access protections against a remote origin reaching a
-  local address), not a bug in the registration code, not a Builder bug, and
-  not fixable by retrying. **This is specific to the sandboxed browser tool
-  used this session** — direct top-level navigation to `localhost:3000` works
-  fine in the same tool; only a *remote page iframing/fetching* `localhost`
-  fails. **Unresolved — needs one of:** Hunter opening the same Homepage
-  editor URL in his own regular Chrome (most representative of real demo
-  usage anyway); or pointing a model's Preview URL at a real deployed HTTPS
-  URL (Vercel) instead of `localhost` once that exists, which would sidestep
-  this class of restriction entirely rather than fighting it repeatedly.
+  **✅ Now fully confirmed working.** Opening the Homepage entry's real Visual
+  Editor initially failed with `net::ERR_BLOCKED_BY_CLIENT` from the
+  sandboxed browser tool used this session, which looked like a Private
+  Network Access-style block on a remote origin (`builder.io`) reaching a
+  local address — but Hunter hit what looked like the same dialog in his own
+  regular Chrome too, which ruled that theory out. The real cause: the entry
+  being tested (`Sustainability`, a `page` model) has its Preview URL set to
+  `http://localhost:3000/sustainability`, and that route genuinely doesn't
+  exist yet (Phase 4 — Surfaces — hasn't started; only `/` and
+  `/demo-switcher` exist). Retrying on the **Homepage** entry specifically
+  (Preview URL `http://localhost:3000/`, a route that does exist) worked in
+  Hunter's Chrome: the token picker populated correctly. **Lesson:** a
+  "site not loading" dialog on a Preview URL pointing at a route that hasn't
+  been built yet is expected, not a bug — always test against `/` (or
+  whichever route actually exists) before concluding the pipeline itself is
+  broken.
+
+### Navbar/footer — hardcoded, not Builder-driven (2026-09-23, session 3)
+
+**Reverses doc 01 §6.1 and the seed spec's Phase 3b item** ("make the footer
+Builder-driven... today it's hardcoded with lorem ipsum in production").
+Hunter's direction, given directly: nav and footer should be **hardcoded in
+the app layout**, not fetched from the `nav`/`footer` Builder models, and
+this is deliberate — "you wouldn't want marketers changing those things."
+It's now framed as a guardrails demo beat in its own right: not everything
+has to be Builder-editable; developers can lock down structural/brand chrome
+in code while the actual content areas (homepage blocks, page bodies,
+promo-slots) stay Builder-driven. This is the mirror image of the
+`promo-slot` model's story (a scoped, deliberately-editable island inside an
+otherwise developer-owned page) — same argument, opposite direction.
+
+Implementation: `src/components/Navbar.tsx` and `Footer.tsx`, both plain
+Server Components (no Builder registration, no `{...attributes}` — that
+rule is for Builder-registered components only, and these deliberately
+aren't), rendered directly in `src/app/layout.tsx` around `{children}`, so
+every route gets them automatically. Nav links to `/help`, `/pro`, `/card`
+will 404 until Phase 4 builds those routes — expected, not a regression.
+
+**Open question, not yet resolved:** the `nav` and `footer` Builder models
+still exist in the space (created Phase 3a) and are now unused by the app —
+nothing fetches them. Left as-is rather than deleting unilaterally (model
+deletion is more consequential than most edits); ask Hunter whether to
+remove them, repurpose them for something else, or leave them for a future
+"before/after guardrails" demo toggle.
 
 ### Phase 3a — done (2026-09-22)
 
