@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Instrument_Sans, Inter } from "next/font/google";
+import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import "./globals.css";
 
 const display = Instrument_Sans({
@@ -22,7 +24,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${display.variable} ${body.variable} h-full`}>
       <body className="min-h-full flex flex-col bg-surface text-ink">
+        <Navbar />
         {children}
+        <Footer />
       </body>
     </html>
   );
