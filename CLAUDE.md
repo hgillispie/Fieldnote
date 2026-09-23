@@ -14,6 +14,89 @@ after pushing.** Don't wait to be asked each time — commit on the working bran
 it, then merge into `main` and push that too, every time. Verify typecheck/build on the
 merged result before pushing `main`, same as any other push.
 
+## Known upstream issue: `npm run build` fails on `/_global-error` (not our bug)
+
+**As of 2026-09-23 (after the 9-component build phase), `npm run build` fails** during
+"Generating static pages" while prerendering the internal `/_global-error` route:
+
+```
+Error occurred prerendering page "/_global-error".
+TypeError: Cannot read properties of null (reading 'useContext')
+```
+
+**Confirmed via direct investigation this session — not caused by anything in this
+repo:**
+- Reproduces identically on a **100% bare, unmodified `create-next-app@16.3.5`**
+  scaffold with zero custom code, zero dependencies beyond the CLI defaults, and zero
+  context providers anywhere in the tree.
+- Reproduces on every commit tested going back to the very first scaffold commit
+  (`c25127e`), long before any of the 9 exemplar components existed.
+- Ruled out: duplicate/mismatched React (single deduped `react@19.2.8` everywhere via
+  `npm ls`), a missing context provider around a custom `global-error.tsx` (added one —
+  still crashes, and this app has no context providers at all to begin with), Turbopack
+  vs. `--webpack`, `experimental.cpus: 1` (rules out a worker-parallelism race), and
+  patch-version bumps within the installed line (`16.3.6`, and the CVE-2025-66478-patched
+  `16.0.7` — both still crash identically).
+- **Tracked upstream, open, unresolved as of this writing:** vercel/next.js #86178,
+  #84994, #95741, #85668 — all describe this exact crash across the Next.js 16.0.x–16.3.x
+  line, several closed only for lacking a minimal repro (not because they were fixed).
+
+**Deliberately not fixed by downgrading Next.js.** The only versions confirmed *not* to
+have this specific bug would require dropping to Next.js 15.x — a major framework version
+change against this repo's documented Next 16 App Router stack, requiring re-validation of
+every Next-16-specific typed-route usage across all 9 components. Hunter's call
+(2026-09-23): don't attempt that migration or a `patch-package` hack on Next's internals
+(fragile, breaks on every `next` upgrade) — leave the version as-is and treat this as a
+tracked upstream blocker instead.
+
+**What this changes about the validation gate:** `npm run typecheck`, `npm run lint`, and
+`npm run test` are unaffected by this bug and remain the required, always-green gate
+(§ Non-negotiables). **`npm run build` is excluded from that gate until Next.js ships a
+fix** — don't treat a red `npm run build` as a regression introduced by whatever you just
+changed; confirm first (as done here) that it also fails on a clean/prior commit before
+assuming your change caused it. Re-try `npm run build` after any Next.js patch release to
+check whether it's been resolved upstream, and update this section (or delete it) once it
+passes clean again.
+
+**⚠️ Blocks real deployment.** This is not just a local annoyance — Vercel's build
+environment runs the identical `next build`, so **this will block any actual Vercel
+production deploy of this branch or `main`** until Next.js ships a fix or a deliberate
+Next 15 downgrade is decided on. Don't attempt a real Vercel deploy of this code without
+first re-checking whether this is still broken.
+
+`src/app/global-error.tsx` exists as a real, working custom error boundary (Fieldnote
+voice, uses the design tokens) regardless of this bug — that's good practice on its own —
+but note its `dynamic = "force-dynamic"` was tried as a fix for this specific crash and
+**confirmed not to fix it**; it's kept only because a runtime crash boundary has no reason
+to be statically cached, not because it resolves the prerender failure. It's the one
+sanctioned exception to the "no `force-dynamic` anywhere" non-negotiable below — a runtime
+error boundary is not a content/ISR route.
+
+## Resolved: `npm run typecheck` failed in CI only (`LayoutProps` not found)
+
+**2026-09-23, PR #1 CI run.** `npm run typecheck` failed on a clean GitHub Actions
+checkout with `src/app/layout.tsx: Cannot find name 'LayoutProps'`, despite passing in
+every local dev-container run throughout the 9-component build session. Root cause,
+confirmed by inspection: `LayoutProps<Route>` is a **global ambient type Next.js
+generates**, written to `.next/types/routes.d.ts` (and referenced transitively via the
+also-generated, also-gitignored `next-env.d.ts`) — it only exists after `next dev`,
+`next build`, or `next typegen` has run at least once. `.next/` is correctly gitignored,
+so a fresh `actions/checkout` + `npm ci` with no prior Next.js invocation genuinely has no
+`LayoutProps` type on disk. Local runs never hit this because a dev server had been
+running continuously all session, so the generated file was already sitting on disk.
+
+**Fixed at the source, not by adding a CI generation step.** `src/app/layout.tsx`'s root
+layout only ever used `children` — no dynamic route params, no parallel-route slots — so
+depending on the generated `LayoutProps<"/">` bought nothing. Replaced it with a plain
+local `interface RootLayoutProps { children: ReactNode }`, removing the dependency on
+`.next/types` entirely rather than teaching CI to run `next typegen` (or a full `next
+build`) before `tsc --noEmit`. Verified by simulating a fully clean checkout locally —
+deleted `.next/`, `next-env.d.ts`, and `tsconfig.tsbuildinfo` (all three gitignored,
+generated files) and re-ran `npm run typecheck`: passes clean with none of them present,
+matching exactly what CI's `actions/checkout` + `npm ci` produces. No other file in the
+repo references `LayoutProps`, `PageProps<...>`, or `ParamsOf<...>` (checked), so this was
+the only occurrence.
+
 ## Source of truth
 
 Five planning docs in `docs/` (not `docs/plan/` — that path doesn't exist in this repo):
@@ -119,7 +202,9 @@ GitHub App issue again — they produce different error text (compare "Permissio
 - **Every** registered component spreads `{...attributes}` onto its root element — carries `builder-id`, the #1 documented cause of empty heatmaps. No exceptions.
 - One token namespace (`--fn-*`), verified end-to-end across app / Tailwind / editor picker.
 - **No interpolated Tailwind classes** (`text-${alignment}` never compiles) — static lookup maps only.
-- **No `force-dynamic`** anywhere — ISR with `revalidate`.
+- **No `force-dynamic`** anywhere — ISR with `revalidate`. One sanctioned exception:
+  `src/app/global-error.tsx` (a runtime crash boundary, not a content/ISR route) — see
+  the known-issue note above; it doesn't fix that bug, it's just correctly uncached.
 - Insert menus registered **unconditionally** — never gated on `editingModel === 'homepage'`.
 - **DOMPurify** on every `dangerouslySetInnerHTML`.
 - `.gitignore` covers `.env` (done — see repo root).
@@ -173,7 +258,10 @@ TypeScript strict, ESLint — all current, no deviation.
   per doc 01 §10.2. This isn't decorative: see the verification note below.
 - `npm run typecheck` (`tsc --noEmit`) and `npm run test` (Vitest, one real smoke test)
   both **exist and pass** — the Builder Code validation-command non-negotiable. `npm run
-  lint` and `npm run build` also pass clean.
+  lint` and `npm run build` also pass clean. **Correction (2026-09-23): `npm run build`
+  no longer passes** — see the known upstream Next.js `/_global-error` issue documented
+  near the top of this file. Confirmed unrelated to anything built in Phase 1 or since;
+  it reproduces on this exact commit's ancestor and on a bare scaffold alike.
 - `.env.local` / `.env.example` carry `NEXT_PUBLIC_BUILDER_API_KEY` — safe to commit,
   it's the *public* key by design (not the private write key).
 - `src/app/demo-switcher/page.tsx` + `actions.ts`, `src/lib/demo-targeting.ts` —

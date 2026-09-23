@@ -40,6 +40,11 @@ Work top to bottom. Items marked **⛔** are hard blockers — nothing downstrea
 *Hunter is doing these in parallel. Don't block on them — build against the `product` data model and a local DummyJSON snapshot first, then wire the connectors when keys land.*
 
 - [ ] 🔥 **Vercel Pro** ($20/mo) — Hobby is non-commercial-only, and its cron jitters ±59 min
+- [ ] ⚠️ **Before any real Vercel deploy:** `npm run build` currently fails on a known,
+      tracked upstream Next.js 16 bug (`/_global-error` prerender crash) — see CLAUDE.md
+      "Known upstream issue" section. Vercel runs the same `next build`, so this will
+      block deployment until Next.js ships a fix (or a deliberate Next 15 downgrade is
+      decided on). Re-check before deploying.
 - [ ] 🔥 **Shopify dev store** via Partners + `--demo-data`; token from the **Headless sales channel**. ⛔ **Set `apiVersion` to `2026-07`** — the Builder plugin defaults to the retired `2020-07` and fails silently
 - [ ] 🔥 **Algolia** — needs **two** keys: a *restricted* key (ACL `search`, `addObject`, `deleteObject`) for the Builder plugin's content sync, and a *search-only* key for the frontend
 - [ ] 🔥 **Cloudinary** — plugin needs only **Cloud name + API key**, no secret. ⛔ Verify the Media Library picker works on a free account (the plugin README mentions an SSO requirement; fall back to Builder's own DAM if blocked)

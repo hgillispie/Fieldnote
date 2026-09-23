@@ -28,6 +28,15 @@ import type { RegisteredComponent } from "@builder.io/sdk-react";
 import { Hero } from "@/components/builder/Hero";
 import { Section } from "@/components/builder/Section";
 import { ProductCard } from "@/components/builder/ProductCard";
+import { ProductGrid } from "@/components/builder/ProductGrid";
+import { FeatureCards } from "@/components/builder/FeatureCards";
+import { RichText } from "@/components/builder/RichText";
+import { Accordion } from "@/components/builder/Accordion";
+import { SearchBox } from "@/components/builder/SearchBox";
+import { Disclosure } from "@/components/builder/Disclosure";
+import { LeadForm } from "@/components/builder/LeadForm";
+import { ArticleList } from "@/components/builder/ArticleList";
+import { Testimonials } from "@/components/builder/Testimonials";
 
 export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
   {
@@ -178,6 +187,397 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
         type: "text",
         defaultValue: "Best Seller",
         showIf: (options: Map<string, unknown>) => options.get("source") === "static",
+      },
+    ],
+  },
+  {
+    component: ProductGrid,
+    name: "ProductGrid",
+    group: "Fieldnote",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23FFFFFF' stroke='%23E8DFD2' stroke-width='2'/%3E%3Crect x='6' y='7' width='11' height='11' fill='%231B3A2F'/%3E%3Crect x='23' y='7' width='11' height='11' fill='%23D4622A'/%3E%3Crect x='6' y='22' width='11' height='11' fill='%23D4622A'/%3E%3Crect x='23' y='22' width='11' height='11' fill='%231B3A2F'/%3E%3C/svg%3E",
+    noWrap: true,
+    inputs: [
+      {
+        name: "source",
+        type: "text",
+        enum: ["builder", "shopify", "api"],
+        defaultValue: "builder",
+        helperText:
+          "builder uses the products list below; shopify/api fetch client-side from apiUrl. All three fall back to a static product set if the source is empty or fails.",
+      },
+      {
+        name: "columns",
+        type: "text",
+        enum: ["2", "3", "4"],
+        defaultValue: "3",
+        helperText: "Number of grid columns at desktop width.",
+      },
+      {
+        name: "heading",
+        type: "text",
+        defaultValue: "Shop the collection",
+        helperText: "Heading shown above the grid.",
+      },
+      {
+        name: "products",
+        type: "list",
+        subFields: [
+          {
+            name: "product",
+            type: "reference",
+            model: "product",
+          },
+        ],
+        showIf: (options: Map<string, unknown>) => options.get("source") === "builder",
+      },
+      {
+        name: "apiUrl",
+        type: "url",
+        helperText: "Endpoint returning a JSON array of products.",
+        showIf: (options: Map<string, unknown>) => options.get("source") !== "builder",
+      },
+    ],
+  },
+  {
+    component: FeatureCards,
+    name: "FeatureCards",
+    group: "Fieldnote",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23F7F5F1'/%3E%3Crect x='5' y='9' width='9' height='11' rx='2' fill='%23FFFFFF' stroke='%235C6670'/%3E%3Crect x='15.5' y='9' width='9' height='11' rx='2' fill='%23FFFFFF' stroke='%235C6670'/%3E%3Crect x='26' y='9' width='9' height='11' rx='2' fill='%23FFFFFF' stroke='%235C6670'/%3E%3Ccircle cx='9.5' cy='13' r='1.6' fill='%23D4622A'/%3E%3Ccircle cx='20' cy='13' r='1.6' fill='%23D4622A'/%3E%3Ccircle cx='30.5' cy='13' r='1.6' fill='%23D4622A'/%3E%3C/svg%3E",
+    noWrap: true,
+    inputs: [
+      {
+        name: "heading",
+        type: "text",
+        defaultValue: "Why gear up with Fieldnote",
+        helperText: "Heading shown above the cards.",
+      },
+      {
+        name: "columns",
+        type: "text",
+        enum: ["2", "3", "4"],
+        defaultValue: "3",
+        helperText: "Number of grid columns at desktop width.",
+      },
+      {
+        name: "cards",
+        type: "list",
+        defaultValue: [
+          {
+            icon: "shield",
+            title: "Lifetime repair guarantee",
+            description:
+              "Every Fieldnote piece is backed by free repairs for as long as you own it — rips, zippers, seams, all of it.",
+          },
+          {
+            icon: "truck",
+            title: "Free shipping over $75",
+            description:
+              "Standard shipping is free on orders over $75, with expedited options at checkout for trip-week orders.",
+          },
+          {
+            icon: "mountain",
+            title: "Field-tested, not lab-tested",
+            description:
+              "Every product spends a season with our guides on real trails before it ships to you.",
+          },
+        ],
+        subFields: [
+          {
+            name: "icon",
+            type: "text",
+            enum: ["compass", "mountain", "shield", "truck", "leaf", "tag"],
+            defaultValue: "compass",
+            helperText: "Used unless an image is set below.",
+          },
+          {
+            name: "image",
+            type: "file",
+            allowedFileTypes: ["jpeg", "jpg", "png", "webp", "svg"],
+            helperText: "Optional — overrides the icon when set.",
+          },
+          { name: "title", type: "text", defaultValue: "Feature title" },
+          {
+            name: "description",
+            type: "longText",
+            defaultValue: "A short description of this feature or benefit.",
+          },
+          { name: "linkLabel", type: "text" },
+          { name: "linkHref", type: "url" },
+        ],
+      },
+    ],
+  },
+  {
+    component: RichText,
+    name: "RichText",
+    group: "Fieldnote",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23FFFFFF' stroke='%23E8DFD2' stroke-width='2'/%3E%3Crect x='8' y='10' width='24' height='3' fill='%2314161A'/%3E%3Crect x='8' y='17' width='24' height='2.5' fill='%235C6670'/%3E%3Crect x='8' y='22' width='24' height='2.5' fill='%235C6670'/%3E%3Crect x='8' y='27' width='15' height='2.5' fill='%23D4622A'/%3E%3C/svg%3E",
+    noWrap: true,
+    inputs: [
+      {
+        name: "content",
+        type: "richText",
+        defaultValue:
+          "<p>Every Fieldnote jacket, pack and boot goes through the same test before it ships: a season in the hands of our own guides, on the actual trips we sell you on.</p><p>That's the difference between gear that looks rugged on a shelf and gear that <strong>holds up on day nine of a ten-day traverse</strong> \u2014 worn, rained on, and packed away wet more times than we'd like to admit.</p><p>Read more about how we source materials and test in the field on our <a href=\"/sustainability\">sustainability page</a>.</p>",
+        helperText: "Rendered as sanitized HTML \u2014 all output is passed through DOMPurify.",
+      },
+      {
+        name: "width",
+        type: "text",
+        enum: ["narrow", "default", "wide"],
+        defaultValue: "default",
+        helperText: "Constrains the line length of long-form copy.",
+      },
+    ],
+  },
+  {
+    component: Accordion,
+    name: "Accordion",
+    group: "Fieldnote",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23FFFFFF' stroke='%23E8DFD2' stroke-width='2'/%3E%3Crect x='6' y='8' width='28' height='8' rx='1' fill='%23F7F5F1'/%3E%3Cpath d='M29 11l2 2-2 2' fill='none' stroke='%23D4622A' stroke-width='1.5'/%3E%3Crect x='6' y='18' width='28' height='8' rx='1' fill='%23F7F5F1'/%3E%3Cpath d='M29 21l2 2-2 2' fill='none' stroke='%235C6670' stroke-width='1.5'/%3E%3C/svg%3E",
+    noWrap: true,
+    inputs: [
+      {
+        name: "heading",
+        type: "text",
+        defaultValue: "Shipping & returns",
+        helperText: "Heading shown above the accordion.",
+      },
+      {
+        name: "behavior",
+        type: "text",
+        enum: ["single", "multiple"],
+        defaultValue: "single",
+        helperText: "single closes other items when one opens; multiple allows several open at once.",
+      },
+      {
+        name: "items",
+        type: "list",
+        defaultValue: [
+          {
+            question: "What's your return policy?",
+            answer:
+              "<p>Unworn gear can be returned within 60 days for a full refund. Worn gear that fails on the trail is covered by our lifetime repair guarantee instead of a return \u2014 <a href=\"/help\">contact us</a> and we'll sort out a repair or replacement.</p>",
+          },
+          {
+            question: "How long does shipping take?",
+            answer:
+              "<p>Standard shipping arrives in 3\u20135 business days and is free on orders over $75. Expedited 2-day shipping is available at checkout if you're packing for a trip this week.</p>",
+          },
+          {
+            question: "How do I find my size?",
+            answer:
+              "<p>Every product page has a size chart under the fit details. If you're between sizes, we generally recommend sizing up for layering room \u2014 our <a href=\"/help\">size guide</a> covers each category in more depth.</p>",
+          },
+        ],
+        subFields: [
+          { name: "question", type: "text", defaultValue: "Your question here" },
+          {
+            name: "answer",
+            type: "richText",
+            defaultValue: "<p>Rendered as sanitized HTML \u2014 all output is passed through DOMPurify.</p>",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    component: SearchBox,
+    name: "SearchBox",
+    group: "Fieldnote",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23FFFFFF' stroke='%23E8DFD2' stroke-width='2'/%3E%3Crect x='7' y='13' width='19' height='9' rx='4.5' fill='%23F7F5F1' stroke='%235C6670'/%3E%3Ccircle cx='27' cy='27' r='4' fill='none' stroke='%23D4622A' stroke-width='2'/%3E%3Cpath d='M30 30l3 3' stroke='%23D4622A' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E",
+    noWrap: true,
+    inputs: [
+      {
+        name: "placeholder",
+        type: "text",
+        defaultValue: "Search jackets, packs, boots...",
+        helperText:
+          "Filters the local product catalog client-side (name + category). Algolia isn't configured yet — this is a real, working filter, not a stub.",
+      },
+    ],
+  },
+  {
+    component: Disclosure,
+    name: "Disclosure",
+    group: "Fieldnote",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23F7F5F1'/%3E%3Crect x='7' y='9' width='26' height='16' rx='2' fill='%23FFFFFF' stroke='%235C6670'/%3E%3Crect x='11' y='13' width='18' height='2' fill='%235C6670'/%3E%3Crect x='11' y='17' width='18' height='2' fill='%235C6670'/%3E%3Ccircle cx='30' cy='28' r='6' fill='%23D4622A'/%3E%3Cpath d='M30 25v3.5l2 2' stroke='%23FFFFFF' stroke-width='1.3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E",
+    noWrap: true,
+    inputs: [
+      {
+        name: "disclosure",
+        type: "reference",
+        model: "disclosure",
+        helperText: "Resolves body, jurisdiction, effective date and version from the referenced disclosure entry.",
+      },
+      {
+        name: "collapsed",
+        type: "boolean",
+        defaultValue: true,
+        helperText: "When on, renders as click-to-expand; when off, the disclosure text is always visible.",
+      },
+      {
+        name: "label",
+        type: "text",
+        defaultValue: "View important disclosures",
+        helperText: "Clickable summary text shown when collapsed.",
+      },
+    ],
+  },
+  {
+    component: LeadForm,
+    name: "LeadForm",
+    group: "Fieldnote",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23FFFFFF' stroke='%23E8DFD2' stroke-width='2'/%3E%3Crect x='8' y='9' width='24' height='4' rx='1' fill='%23F7F5F1' stroke='%235C6670'/%3E%3Crect x='8' y='16' width='24' height='4' rx='1' fill='%23F7F5F1' stroke='%235C6670'/%3E%3Crect x='8' y='25' width='13' height='6' rx='2' fill='%231B3A2F'/%3E%3C/svg%3E",
+    noWrap: true,
+    inputs: [
+      {
+        name: "heading",
+        type: "text",
+        defaultValue: "Talk to our Pro team",
+        helperText: "Heading shown above the form.",
+      },
+      {
+        name: "subheading",
+        type: "longText",
+        defaultValue:
+          "Tell us about your outfitter, guide service, or fleet and we'll follow up with trade pricing and bulk ordering options.",
+      },
+      {
+        name: "ctaLabel",
+        type: "text",
+        defaultValue: "Request trade pricing",
+      },
+      {
+        name: "endpoint",
+        type: "url",
+        helperText:
+          "No CRM is connected yet. Leave blank to simulate a real submission with a genuine success state; set a URL to POST leads there instead \u2014 no other change needed.",
+      },
+    ],
+  },
+  {
+    component: ArticleList,
+    name: "ArticleList",
+    group: "Fieldnote",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23FFFFFF' stroke='%23E8DFD2' stroke-width='2'/%3E%3Crect x='5' y='8' width='11' height='9' fill='%23E8DFD2'/%3E%3Crect x='5' y='19' width='11' height='3' fill='%2314161A'/%3E%3Crect x='5' y='24' width='11' height='2.5' fill='%235C6670'/%3E%3Crect x='19' y='8' width='11' height='9' fill='%23E8DFD2'/%3E%3Crect x='19' y='19' width='11' height='3' fill='%2314161A'/%3E%3Crect x='19' y='24' width='11' height='2.5' fill='%235C6670'/%3E%3C/svg%3E",
+    noWrap: true,
+    inputs: [
+      {
+        name: "source",
+        type: "text",
+        enum: ["manual", "surface"],
+        defaultValue: "manual",
+        helperText:
+          "manual uses the articles list below; surface auto-populates by querying the surface/topic filters instead of picking articles by hand.",
+      },
+      {
+        name: "heading",
+        type: "text",
+        defaultValue: "From the field",
+        helperText: "Heading shown above the list.",
+      },
+      {
+        name: "columns",
+        type: "text",
+        enum: ["2", "3", "4"],
+        defaultValue: "3",
+        helperText: "Number of grid columns at desktop width.",
+      },
+      {
+        name: "articles",
+        type: "list",
+        subFields: [
+          {
+            name: "article",
+            type: "reference",
+            model: "article",
+          },
+        ],
+        showIf: (options: Map<string, unknown>) => options.get("source") === "manual",
+      },
+      {
+        name: "surface",
+        type: "text",
+        enum: ["all", "help", "blog", "pro"],
+        defaultValue: "all",
+        showIf: (options: Map<string, unknown>) => options.get("source") === "surface",
+      },
+      {
+        name: "topic",
+        type: "reference",
+        model: "help-topic",
+        helperText: "Optional \u2014 narrows the surface query to one topic.",
+        showIf: (options: Map<string, unknown>) => options.get("source") === "surface",
+      },
+    ],
+  },
+  {
+    component: Testimonials,
+    name: "Testimonials",
+    group: "Fieldnote",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23F7F5F1'/%3E%3Cpath d='M10 12h8v7c0 2.8-2.2 5-5 5h-1v-3h1c1.1 0 2-.9 2-2h-5v-7z' fill='%231B3A2F'/%3E%3Cpath d='M22 12h8v7c0 2.8-2.2 5-5 5h-1v-3h1c1.1 0 2-.9 2-2h-5v-7z' fill='%23D4622A'/%3E%3C/svg%3E",
+    noWrap: true,
+    inputs: [
+      {
+        name: "heading",
+        type: "text",
+        defaultValue: "What our customers say",
+        helperText: "Heading shown above the testimonials.",
+      },
+      {
+        name: "layout",
+        type: "text",
+        enum: ["grid", "carousel"],
+        defaultValue: "grid",
+        helperText: "carousel is a real slider with prev/next controls and auto-advance (paused on hover).",
+      },
+      {
+        name: "testimonials",
+        type: "list",
+        defaultValue: [
+          {
+            quote:
+              "I've put the Cascade shell through three wet-season backpacking trips now and it still beads water like day one. First rain jacket I haven't had to re-treat every month.",
+            authorName: "Priya Nandan",
+            authorRole: "Backpacker, Portland OR",
+          },
+          {
+            quote:
+              "Ordered the Longhaul pack for a six-country trip and it fit in every overhead bin I threw at it, including the tiny regional ones in Southeast Asia.",
+            authorName: "Diego Fuentes",
+            authorRole: "Travel blogger",
+          },
+          {
+            quote:
+              "We outfit twelve guides a season and Fieldnote's the first brand where the repair guarantee actually held up when we used it. That's rare in this industry.",
+            authorName: "Casey Whitfield",
+            authorRole: "Owner, Ridge & River Guiding Co.",
+          },
+        ],
+        subFields: [
+          {
+            name: "quote",
+            type: "longText",
+            defaultValue: "This gear held up exactly the way we hoped it would.",
+          },
+          { name: "authorName", type: "text", defaultValue: "Customer name" },
+          { name: "authorRole", type: "text" },
+          {
+            name: "avatar",
+            type: "file",
+            allowedFileTypes: ["jpeg", "jpg", "png", "webp"],
+          },
+        ],
       },
     ],
   },
