@@ -36,6 +36,7 @@ import { SearchBox } from "@/components/builder/SearchBox";
 import { Disclosure } from "@/components/builder/Disclosure";
 import { LeadForm } from "@/components/builder/LeadForm";
 import { ArticleList } from "@/components/builder/ArticleList";
+import { Testimonials } from "@/components/builder/Testimonials";
 
 export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
   {
@@ -516,6 +517,67 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
         model: "help-topic",
         helperText: "Optional \u2014 narrows the surface query to one topic.",
         showIf: (options: Map<string, unknown>) => options.get("source") === "surface",
+      },
+    ],
+  },
+  {
+    component: Testimonials,
+    name: "Testimonials",
+    group: "Fieldnote",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23F7F5F1'/%3E%3Cpath d='M10 12h8v7c0 2.8-2.2 5-5 5h-1v-3h1c1.1 0 2-.9 2-2h-5v-7z' fill='%231B3A2F'/%3E%3Cpath d='M22 12h8v7c0 2.8-2.2 5-5 5h-1v-3h1c1.1 0 2-.9 2-2h-5v-7z' fill='%23D4622A'/%3E%3C/svg%3E",
+    noWrap: true,
+    inputs: [
+      {
+        name: "heading",
+        type: "text",
+        defaultValue: "What our customers say",
+        helperText: "Heading shown above the testimonials.",
+      },
+      {
+        name: "layout",
+        type: "text",
+        enum: ["grid", "carousel"],
+        defaultValue: "grid",
+        helperText: "carousel is a real slider with prev/next controls and auto-advance (paused on hover).",
+      },
+      {
+        name: "testimonials",
+        type: "list",
+        defaultValue: [
+          {
+            quote:
+              "I've put the Cascade shell through three wet-season backpacking trips now and it still beads water like day one. First rain jacket I haven't had to re-treat every month.",
+            authorName: "Priya Nandan",
+            authorRole: "Backpacker, Portland OR",
+          },
+          {
+            quote:
+              "Ordered the Longhaul pack for a six-country trip and it fit in every overhead bin I threw at it, including the tiny regional ones in Southeast Asia.",
+            authorName: "Diego Fuentes",
+            authorRole: "Travel blogger",
+          },
+          {
+            quote:
+              "We outfit twelve guides a season and Fieldnote's the first brand where the repair guarantee actually held up when we used it. That's rare in this industry.",
+            authorName: "Casey Whitfield",
+            authorRole: "Owner, Ridge & River Guiding Co.",
+          },
+        ],
+        subFields: [
+          {
+            name: "quote",
+            type: "longText",
+            defaultValue: "This gear held up exactly the way we hoped it would.",
+          },
+          { name: "authorName", type: "text", defaultValue: "Customer name" },
+          { name: "authorRole", type: "text" },
+          {
+            name: "avatar",
+            type: "file",
+            allowedFileTypes: ["jpeg", "jpg", "png", "webp"],
+          },
+        ],
       },
     ],
   },
