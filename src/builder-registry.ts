@@ -31,6 +31,7 @@ import { ProductCard } from "@/components/builder/ProductCard";
 import { ProductGrid } from "@/components/builder/ProductGrid";
 import { FeatureCards } from "@/components/builder/FeatureCards";
 import { RichText } from "@/components/builder/RichText";
+import { Accordion } from "@/components/builder/Accordion";
 
 export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
   {
@@ -324,6 +325,58 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
         enum: ["narrow", "default", "wide"],
         defaultValue: "default",
         helperText: "Constrains the line length of long-form copy.",
+      },
+    ],
+  },
+  {
+    component: Accordion,
+    name: "Accordion",
+    group: "Fieldnote",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23FFFFFF' stroke='%23E8DFD2' stroke-width='2'/%3E%3Crect x='6' y='8' width='28' height='8' rx='1' fill='%23F7F5F1'/%3E%3Cpath d='M29 11l2 2-2 2' fill='none' stroke='%23D4622A' stroke-width='1.5'/%3E%3Crect x='6' y='18' width='28' height='8' rx='1' fill='%23F7F5F1'/%3E%3Cpath d='M29 21l2 2-2 2' fill='none' stroke='%235C6670' stroke-width='1.5'/%3E%3C/svg%3E",
+    noWrap: true,
+    inputs: [
+      {
+        name: "heading",
+        type: "text",
+        defaultValue: "Shipping & returns",
+        helperText: "Heading shown above the accordion.",
+      },
+      {
+        name: "behavior",
+        type: "text",
+        enum: ["single", "multiple"],
+        defaultValue: "single",
+        helperText: "single closes other items when one opens; multiple allows several open at once.",
+      },
+      {
+        name: "items",
+        type: "list",
+        defaultValue: [
+          {
+            question: "What's your return policy?",
+            answer:
+              "<p>Unworn gear can be returned within 60 days for a full refund. Worn gear that fails on the trail is covered by our lifetime repair guarantee instead of a return \u2014 <a href=\"/help\">contact us</a> and we'll sort out a repair or replacement.</p>",
+          },
+          {
+            question: "How long does shipping take?",
+            answer:
+              "<p>Standard shipping arrives in 3\u20135 business days and is free on orders over $75. Expedited 2-day shipping is available at checkout if you're packing for a trip this week.</p>",
+          },
+          {
+            question: "How do I find my size?",
+            answer:
+              "<p>Every product page has a size chart under the fit details. If you're between sizes, we generally recommend sizing up for layering room \u2014 our <a href=\"/help\">size guide</a> covers each category in more depth.</p>",
+          },
+        ],
+        subFields: [
+          { name: "question", type: "text", defaultValue: "Your question here" },
+          {
+            name: "answer",
+            type: "richText",
+            defaultValue: "<p>Rendered as sanitized HTML \u2014 all output is passed through DOMPurify.</p>",
+          },
+        ],
       },
     ],
   },
