@@ -35,6 +35,7 @@ import { Accordion } from "@/components/builder/Accordion";
 import { SearchBox } from "@/components/builder/SearchBox";
 import { Disclosure } from "@/components/builder/Disclosure";
 import { LeadForm } from "@/components/builder/LeadForm";
+import { ArticleList } from "@/components/builder/ArticleList";
 
 export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
   {
@@ -458,6 +459,63 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
         type: "url",
         helperText:
           "No CRM is connected yet. Leave blank to simulate a real submission with a genuine success state; set a URL to POST leads there instead \u2014 no other change needed.",
+      },
+    ],
+  },
+  {
+    component: ArticleList,
+    name: "ArticleList",
+    group: "Fieldnote",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23FFFFFF' stroke='%23E8DFD2' stroke-width='2'/%3E%3Crect x='5' y='8' width='11' height='9' fill='%23E8DFD2'/%3E%3Crect x='5' y='19' width='11' height='3' fill='%2314161A'/%3E%3Crect x='5' y='24' width='11' height='2.5' fill='%235C6670'/%3E%3Crect x='19' y='8' width='11' height='9' fill='%23E8DFD2'/%3E%3Crect x='19' y='19' width='11' height='3' fill='%2314161A'/%3E%3Crect x='19' y='24' width='11' height='2.5' fill='%235C6670'/%3E%3C/svg%3E",
+    noWrap: true,
+    inputs: [
+      {
+        name: "source",
+        type: "text",
+        enum: ["manual", "surface"],
+        defaultValue: "manual",
+        helperText:
+          "manual uses the articles list below; surface auto-populates by querying the surface/topic filters instead of picking articles by hand.",
+      },
+      {
+        name: "heading",
+        type: "text",
+        defaultValue: "From the field",
+        helperText: "Heading shown above the list.",
+      },
+      {
+        name: "columns",
+        type: "text",
+        enum: ["2", "3", "4"],
+        defaultValue: "3",
+        helperText: "Number of grid columns at desktop width.",
+      },
+      {
+        name: "articles",
+        type: "list",
+        subFields: [
+          {
+            name: "article",
+            type: "reference",
+            model: "article",
+          },
+        ],
+        showIf: (options: Map<string, unknown>) => options.get("source") === "manual",
+      },
+      {
+        name: "surface",
+        type: "text",
+        enum: ["all", "help", "blog", "pro"],
+        defaultValue: "all",
+        showIf: (options: Map<string, unknown>) => options.get("source") === "surface",
+      },
+      {
+        name: "topic",
+        type: "reference",
+        model: "help-topic",
+        helperText: "Optional \u2014 narrows the surface query to one topic.",
+        showIf: (options: Map<string, unknown>) => options.get("source") === "surface",
       },
     ],
   },
