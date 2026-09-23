@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
+import { fetchOneEntry } from "@builder.io/sdk-react";
 import { DEMO_SEGMENTS, getDemoUserAttributes } from "@/lib/demo-targeting";
-import { setDemoSegment } from "./actions";
+import { PersonaButtons } from "./PersonaButtons";
+import { BUILDER_API_KEY } from "@/lib/builder-config";
 
+// Excluded from search/sitemap — this is an internal demo tool, not a real
+// page, and should never be indexed or linked from anywhere in the app.
 export const metadata: Metadata = {
   title: "Demo switcher — Fieldnote",
   robots: { index: false, follow: false },
@@ -11,8 +15,25 @@ export default async function DemoSwitcherPage() {
   const active = await getDemoUserAttributes();
   const activeJson = JSON.stringify(active);
   const activeId = DEMO_SEGMENTS.find(
-    (segment) => JSON.stringify(segment.attributes) === activeJson
+    (segment) => JSON.stringify(segment.attributes) === activeJson,
   )?.id;
+
+  // ENTERPRISE PATTERN: TARGETING + CACHING, wired end-to-end
+  //
+  // This page already reads `cookies()` (via `getDemoUserAttributes`), so
+  // it's already fully dynamic — there is no ISR cost to protect here, unlike
+  // the homepage (see `src/app/page.tsx`'s caching comment block). That makes
+  // this the one safe place in the app to demonstrate what a *targeted*
+  // Builder fetch actually looks like: the same `userAttributes` object this
+  // page already resolved for the "Active" badge above is passed straight
+  // into `fetchOneEntry`, and Builder's own targeting engine resolves
+  // whichever variation matches server-side — no client-side re-fetch, no
+  // flash of untargeted content.
+  const targetedContent = await fetchOneEntry({
+    apiKey: BUILDER_API_KEY,
+    model: "homepage",
+    userAttributes: { urlPath: "/", ...active },
+  }).catch(() => null);
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-16">
@@ -25,31 +46,20 @@ export default async function DemoSwitcherPage() {
         as that segment. Not indexed, not linked from anywhere in the app.
       </p>
 
-      <div className="mt-8 flex flex-col gap-3">
-        {DEMO_SEGMENTS.map((segment) => (
-          <form key={segment.id} action={setDemoSegment}>
-            <input type="hidden" name="segmentId" value={segment.id} />
-            <button
-              type="submit"
-              className="flex w-full flex-col gap-1 rounded-lg border border-sand bg-surface p-4 text-left transition hover:border-primary"
-            >
-              <span className="flex items-center justify-between font-display text-lg text-ink">
-                {segment.label}
-                {segment.id === activeId && (
-                  <span className="text-xs font-medium uppercase text-success">
-                    Active
-                  </span>
-                )}
-              </span>
-              <span className="text-sm text-slate">{segment.description}</span>
-              {Object.keys(segment.attributes).length > 0 && (
-                <code className="mt-1 text-xs text-slate">
-                  {JSON.stringify(segment.attributes)}
-                </code>
-              )}
-            </button>
-          </form>
-        ))}
+      <PersonaButtons segments={DEMO_SEGMENTS} activeId={activeId} />
+
+      <div className="mt-10 rounded-lg border border-sand bg-surface-alt p-4">
+        <p className="text-xs font-medium uppercase tracking-wide text-slate">
+          userAttributes sent to Builder on this request
+        </p>
+        <code className="mt-2 block text-xs text-ink">
+          {JSON.stringify({ urlPath: "/", ...active }, null, 2)}
+        </code>
+        <p className="mt-3 text-xs text-slate">
+          {targetedContent
+            ? "Builder resolved a homepage entry for these attributes."
+            : "No published homepage entry resolved for these attributes (expected on a fresh space with only draft content)."}
+        </p>
       </div>
     </main>
   );

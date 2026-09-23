@@ -2,6 +2,15 @@
 
 type HeroVariant = "image" | "split" | "text";
 
+// ENTERPRISE PATTERN: DAM COEXISTENCE (Builder Asset Manager + Cloudinary)
+// The shape stored by the `cloudinaryImage` custom field type — see
+// `plugins/cloudinary-picker/plugin.tsx` for where this is registered and
+// why it's a secondary, optional image source rather than replacing
+// `heroImage`.
+interface HeroCloudinaryImage {
+  secureUrl?: string;
+}
+
 interface HeroProps {
   variant?: HeroVariant;
   eyebrow?: string;
@@ -11,6 +20,7 @@ interface HeroProps {
   ctaHref?: string;
   heroImage?: string;
   heroImageAlt?: string;
+  cloudinaryImage?: HeroCloudinaryImage;
   attributes?: Record<string, unknown>;
 }
 
@@ -45,13 +55,20 @@ export function Hero({
   ctaHref = "/shop",
   heroImage,
   heroImageAlt,
+  cloudinaryImage,
   attributes,
 }: HeroProps) {
+  // Cloudinary, when an editor has picked one via the "Choose from
+  // Cloudinary" field, wins over Builder's own Asset Manager image — see
+  // the ENTERPRISE PATTERN comment on `cloudinaryImage` in
+  // src/builder-registry.ts.
+  const resolvedImage = cloudinaryImage?.secureUrl || heroImage;
+
   return (
     <section {...attributes} className={CONTAINER_CLASSES[variant]}>
-      {variant === "image" && heroImage && (
+      {variant === "image" && resolvedImage && (
         <img
-          src={heroImage}
+          src={resolvedImage}
           alt={heroImageAlt ?? ""}
           className="absolute inset-0 h-full w-full object-cover"
         />
@@ -60,9 +77,9 @@ export function Hero({
 
       {variant === "split" && (
         <div className="overflow-hidden rounded-md bg-sand">
-          {heroImage && (
+          {resolvedImage && (
             <img
-              src={heroImage}
+              src={resolvedImage}
               alt={heroImageAlt ?? ""}
               className="aspect-[4/3] w-full object-cover"
             />

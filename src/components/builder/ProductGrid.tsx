@@ -1,5 +1,39 @@
 "use client";
 
+// ENTERPRISE PATTERN: EXTERNAL DATA INTO COMPONENTS (Shopify-style)
+//
+// This component supports three data sources, chosen per-instance by the
+// content editor via the `source` input (registered in
+// `src/builder-registry.ts`):
+//   - "builder"  — a `list` of `reference` fields to the `product` model,
+//                  resolved server-side by Builder's own content API.
+//   - "shopify"  — live commerce data. `apiUrl` defaults to
+//                  `/api/shopify-products`, a Next.js Route Handler that
+//                  calls a (clearly mocked) Shopify Storefront API on the
+//                  server, with a timeout and a fallback to Builder content
+//                  baked in — see `src/app/api/shopify-products/route.ts`
+//                  and `src/lib/commerce/shopify.ts` for that half.
+//   - "api"      — the same client-fetch code path as "shopify", pointed at
+//                  any other JSON endpoint (a PIM, a different commerce
+//                  platform, an internal BFF) via a custom `apiUrl`.
+//
+// WHY THIS COMPONENT FETCHES CLIENT-SIDE, NOT SERVER-SIDE, FOR THOSE SOURCES
+// `ProductGrid` is a Builder-registered component rendered inside `<Content>`,
+// which is a Client Component on this SDK (see AGENTS.md / CLAUDE.md — Gen 2
+// `@builder.io/sdk-react` cannot register React Server Components, unlike
+// `sdk-react-nextjs`'s `isRSC: true` mode). So the *actual* server-side work
+// — calling the commerce API, applying the timeout, falling back to Builder
+// content on failure — happens in the Route Handler this component's `fetch`
+// call hits, not inside this component itself. This is the realistic shape
+// for a Builder integration where a page has some server-fetched Builder
+// content and some client-side-editable interactive blocks side by side.
+//
+// At real enterprise scale (50+ components, multiple brands sharing this
+// library), this data-fetching concern is usually factored out further: a
+// shared `useProductSource(source, apiUrl)` hook in a `@fieldnote/commerce`
+// package, so every product-rendering component (grid, carousel, PDP
+// recommendations, cart upsell) shares one fetch/cache/fallback
+// implementation instead of each reimplementing it.
 import { useEffect, useState } from "react";
 
 type ProductGridSource = "builder" | "shopify" | "api";
@@ -46,9 +80,16 @@ const COLUMN_CLASSES: Record<ProductGridColumns, string> = {
   "4": "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",
 };
 
-// Real, non-lorem gear so the grid never looks empty — used whenever a
-// remote source (Shopify/API) fails, returns nothing, or hasn't been
-// configured, and whenever the Builder-sourced list is empty.
+// ENTERPRISE PATTERN: EXTERNAL DATA INTO COMPONENTS — client-side fallback
+// This is the *second* fallback layer, distinct from the server-side
+// fallback in `/api/shopify-products/route.ts`. That route already falls
+// back to Builder-authored `product` entries if Shopify fails; this constant
+// is the last-resort layer in case even that request never completes (e.g.
+// the client is offline, or `apiUrl` is misconfigured/blank). Two fallback
+// layers sounds redundant until you've been paged for a homepage that
+// rendered nothing because a single upstream had a bad day — defense in
+// depth on a page's most-visible, highest-traffic component is a deliberate
+// choice, not overengineering.
 const FALLBACK_PRODUCTS: GridProduct[] = [
   {
     name: "Cascade 3L Shell",

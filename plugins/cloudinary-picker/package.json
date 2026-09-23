@@ -1,0 +1,12 @@
+{
+  "name": "@fieldnote/cloudinary-picker-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Builder.io custom field-type plugin: a Cloudinary Upload Widget picker for the 'cloudinaryImage' field type. See README.md before building/hosting this.",
+  "main": "plugin.tsx",
+  "dependencies": {
+    "@builder.io/react": "^9.4.7",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  }
+}

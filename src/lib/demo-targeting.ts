@@ -1,18 +1,45 @@
 import { cookies } from "next/headers";
+import {
+  DEMO_SESSION_COOKIE,
+  decodeDemoSession,
+  type DemoSessionAttributes,
+} from "@/lib/demo-session";
 
-// Deliberately not wired into the homepage fetch yet: calling `cookies()`
-// forces a route into dynamic rendering, which would knock `/` off ISR
-// (`revalidate = 60`) as a side effect of this page rather than a decision
-// made when Phase 6 ("pass userAttributes on every fetch") tackles it
-// properly — e.g. reading the cookie only inside a Suspense-scoped slice,
-// or re-fetching client-side after the static shell loads.
-export const DEMO_TARGETING_COOKIE = "fn_targeting";
+/**
+ * ENTERPRISE PATTERN: TARGETING
+ *
+ * This is where per-visitor custom attributes (customerTier, lifecycleStage,
+ * hasProAccount, market, ...) are read out of the request and shaped into
+ * the object Builder's `userAttributes` fetch option expects. Two read paths
+ * exist, deliberately, for two different situations:
+ *
+ *   1. `getDemoUserAttributes()` below reads the cookie directly via
+ *      `next/headers`'s `cookies()`. This is only safe to call from a route
+ *      that's *already* dynamic (reading `cookies()` forces that, by Next's
+ *      own rule) — `src/app/demo-switcher/page.tsx` is exactly that kind of
+ *      route, since it needs to read the active segment to render the
+ *      "Active" badge regardless of targeting.
+ *   2. `src/middleware.ts` reads the same cookie at the edge on *every*
+ *      request (including ones bound for statically-cached ISR routes) and
+ *      forwards the attributes as `x-fn-*` request headers, so a route that
+ *      wants them without itself becoming fully dynamic has that option
+ *      available via `headers()` — though reading `headers()` carries the
+ *      same dynamic-rendering cost as `cookies()` does. There is no way to
+ *      read per-request personalization data in a Server Component for free;
+ *      the choice is always which specific routes accept that cost.
+ *
+ * Deliberately NOT wired into the homepage's own fetch (`src/app/page.tsx`)
+ * — see that file's caching comment block for exactly why turning `/` itself
+ * dynamic to support this would be the wrong trade at this route's traffic
+ * level.
+ */
+export const DEMO_TARGETING_COOKIE = DEMO_SESSION_COOKIE;
 
 export interface DemoSegment {
   id: string;
   label: string;
   description: string;
-  attributes: Record<string, string | boolean>;
+  attributes: DemoSessionAttributes;
 }
 
 // Mirrors seed spec §5's segment table. "anonymous" is the reset state —
@@ -58,17 +85,7 @@ export const DEMO_SEGMENTS: DemoSegment[] = [
   },
 ];
 
-export async function getDemoUserAttributes(): Promise<
-  Record<string, string | boolean>
-> {
+export async function getDemoUserAttributes(): Promise<DemoSessionAttributes> {
   const store = await cookies();
-  const raw = store.get(DEMO_TARGETING_COOKIE)?.value;
-  if (!raw) return {};
-
-  try {
-    const parsed = JSON.parse(raw);
-    return typeof parsed === "object" && parsed !== null ? parsed : {};
-  } catch {
-    return {};
-  }
+  return decodeDemoSession(store.get(DEMO_SESSION_COOKIE)?.value);
 }
