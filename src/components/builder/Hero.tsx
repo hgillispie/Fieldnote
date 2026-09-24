@@ -2,7 +2,7 @@
 
 import { SectionShell } from "./SectionShell";
 
-type HeroVariant = "image" | "split" | "text";
+export type HeroVariant = "image" | "split" | "text";
 
 // ENTERPRISE PATTERN: DAM COEXISTENCE (Builder Asset Manager + Cloudinary)
 // The shape stored by the `cloudinaryImage` custom field type — see
@@ -13,7 +13,7 @@ interface HeroCloudinaryImage {
   secureUrl?: string;
 }
 
-interface HeroProps {
+export interface HeroProps {
   variant?: HeroVariant;
   eyebrow?: string;
   heading?: string;

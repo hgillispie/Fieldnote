@@ -3,15 +3,15 @@
 /**
  * The single Builder component + editor-settings registry for this app.
  * Client-only: `@builder.io/sdk-react` cannot register React Server
- * Components (SDK constraint, not a Builder one — see CLAUDE.md).
+ * Components (SDK constraint, not a Builder one - see CLAUDE.md).
  *
  * Imported once from RenderBuilderContent so registration runs wherever
  * Builder content is rendered. All `register()` calls below run
- * unconditionally at module scope — never gated on `builder.editingModel`,
+ * unconditionally at module scope - never gated on `builder.editingModel`,
  * which is what hid 9 components in the old build. New components Builder
  * Code adds get registered the same way, in this same file.
  *
- * ⚠️ `register("component", info)` alone is NOT enough to render — it only
+ * ⚠️ `register("component", info)` alone is NOT enough to render - it only
  * posts a message to the Visual Editor iframe so the component shows up in
  * the insert menu and options panel (confirmed from the SDK's compiled
  * source: the registered-component store it writes to is never read by
@@ -19,7 +19,7 @@
  * from an explicit `customComponents` prop instead. So every component here
  * is registered *and* collected into `CUSTOM_COMPONENTS`, which
  * RenderBuilderContent.tsx passes to `<Content customComponents={...}>`.
- * Skip either half and the component silently no-ops — no error, just a
+ * Skip either half and the component silently no-ops - no error, just a
  * console warning ("Could not find a registered component named X") and a
  * blank space where it should render.
  *
@@ -28,9 +28,9 @@
  * Every input schema below is deliberately shaped, not just "whatever field
  * types happened to work":
  *   - `enum` inputs (rendered as a dropdown via `type: "text"` + an `enum`
- *     array — there is no separate `"enum"` input type on this SDK) are used
+ *     array - there is no separate `"enum"` input type on this SDK) are used
  *     everywhere a component has a small, fixed set of *design-system*
- *     variants (Hero's `variant`, Section's `width`/`padding`/`background`).
+ *     variants (Hero's `variant`, Container's `width`/`padding`/`background`).
  *     This is a governance choice as much as a UX one: a marketer picks from
  *     a closed set that a designer/engineer defined, instead of typing a
  *     raw class name or hex value into a free-text field. Multiply that by
@@ -38,7 +38,7 @@
  *     keeps a component's rendered output from drifting into one-off,
  *     unmaintainable states.
  *   - `showIf` (a real predicate function over `Map<string, unknown>`, not a
- *     string expression — the SDK serializes functions for editor-iframe
+ *     string expression - the SDK serializes functions for editor-iframe
  *     transport, so this is fully supported, not a hack) is used to hide
  *     inputs that don't apply to the selected mode (e.g. `ProductCard`'s
  *     static-field inputs only show when `source === "static"`). At scale,
@@ -49,33 +49,33 @@
  *     relying on editors reading a style guide. `heroImageAlt` is named
  *     *exactly* that, not `imageAlt` or `altText`, because a downstream
  *     accessibility-governance check keys off that exact field name when
- *     scanning `Hero` blocks — the input name is itself part of the contract.
+ *     scanning `Hero` blocks - the input name is itself part of the contract.
  *
  * WHY THERE'S NO `isRSC` FLAG HERE
  * `sdk-react-nextjs` (the newer, still-0.x Next.js-specific SDK) supports an
  * `isRSC: true` flag on `ComponentInfo` so a registered component can be a
  * genuine React Server Component with zero client JS shipped for it. This
- * app deliberately uses `@builder.io/sdk-react` (Gen 2) instead — see
- * AGENTS.md and CLAUDE.md for the full reasoning — and that SDK's `register`
+ * app deliberately uses `@builder.io/sdk-react` (Gen 2) instead - see
+ * AGENTS.md and CLAUDE.md for the full reasoning - and that SDK's `register`
  * has no `isRSC` option at all: every component registered here is a Client
  * Component by construction, and `<Content>` itself only renders client-side.
  * That's a real SDK-level trade-off (more client JS shipped than an RSC-first
- * setup would need), not a Builder-the-product limitation — don't tell a
+ * setup would need), not a Builder-the-product limitation - don't tell a
  * prospect evaluating Builder that Builder can't do RSC; tell them this
  * specific SDK choice trades RSC support for Gen 2's broader interactive-
  * feature support, and `sdk-react-nextjs` is the other point on that curve.
  *
  * HOW A REAL ORG SPLITS THIS PAST ~50 COMPONENTS
  * One flat `CUSTOM_COMPONENTS` array in one file is exactly right at this
- * app's size (13 components, one team, one brand). It stops being right long
- * before an org reaches 50+ components across multiple product teams and
- * multiple brands sharing a design system, for reasons that show up in order:
- *   1. Merge conflicts — every team editing the same array in the same file
+ * app's size (one team, one brand). It stops being right long before an org
+ * reaches 50+ components across multiple product teams and multiple brands
+ * sharing a design system, for reasons that show up in order:
+ *   1. Merge conflicts - every team editing the same array in the same file
  *      on every PR.
- *   2. Ownership — a "Checkout" team's components and a "Content/Marketing"
+ *   2. Ownership - a "Checkout" team's components and a "Content/Marketing"
  *      team's components have different release cadences and different
  *      reviewers; one file can't express that.
- *   3. Bundle size — every component in `CUSTOM_COMPONENTS` ships to every
+ *   3. Bundle size - every component in `CUSTOM_COMPONENTS` ships to every
  *      page's client bundle regardless of whether that page uses it, unless
  *      the registration itself is code-split.
  * The standard fix is to push component *ownership* into per-team or
@@ -100,28 +100,36 @@
  * with 6 storefronts on one Builder space setup) can have each brand's app
  * import only the packages relevant to it, keeping bundles lean. The
  * unconditional-registration rule (below, and in AGENTS.md) still applies to
- * every one of those packages individually — none of them should ever gate
+ * every one of those packages individually - none of them should ever gate
  * their `register()` calls on `editingModel`.
  *
  * HOW DESIGN TOKENS FLOW INTO COMPONENT DEFAULTS
  * The `editor.settings.designTokens` call at the bottom of this file (colors,
- * font family, font size — all `var(--fn-*, fallback)`) is what populates
+ * font family, font size - all `var(--fn-*, fallback)`) is what populates
  * Builder's Style tab token picker; `styleStrictMode: true` +
  * `allowOverridingTokens: false` means that picker is the *only* way to set
- * color/font/size in the Visual Editor — no arbitrary hex values. Component
- * `defaultValue`s (e.g. Section's `background: "surface"`) are a second,
+ * color/font/size in the Visual Editor - no arbitrary hex values. Component
+ * `defaultValue`s (e.g. Container's `background: "surface"`) are a second,
  * complementary layer: they set which *token* a freshly-dragged-in component
  * starts on, so a new instance already matches the design system before an
  * editor touches anything. Change a value in `src/app/globals.css`'s
  * `:root`/`@theme inline` block and both layers move together automatically
- * — the token *name* (`surface`, `primary`, ...) referenced here in
+ * - the token *name* (`surface`, `primary`, ...) referenced here in
  * `defaultValue`s and `enum`s never needs to change, only its underlying
  * value does. See `.builder/rules/tokens.mdc` for the full three-way binding.
+ *
+ * INSERT MENU CATEGORIES ("group" below)
+ * "Heros" groups Hero and its three fixed-variant wrappers (Text Hero, Image
+ * Hero, Split Hero). "Cards" groups the atomic Icon Card alongside
+ * ProductCard. "Layout" groups Container and its deprecated "Section" alias.
+ * Everything else keeps its existing "Fieldnote" group.
  */
 import { register } from "@builder.io/sdk-react";
 import type { RegisteredComponent } from "@builder.io/sdk-react";
 import { Hero } from "@/components/builder/Hero";
-import { Section } from "@/components/builder/Section";
+import { TextHero, ImageHero, SplitHero } from "@/components/builder/HeroVariants";
+import { Container } from "@/components/builder/Container";
+import { IconCard } from "@/components/builder/IconCard";
 import { ProductCard } from "@/components/builder/ProductCard";
 import { ProductGrid } from "@/components/builder/ProductGrid";
 import { FeatureCards } from "@/components/builder/FeatureCards";
@@ -133,11 +141,53 @@ import { LeadForm } from "@/components/builder/LeadForm";
 import { ArticleList } from "@/components/builder/ArticleList";
 import { Testimonials } from "@/components/builder/Testimonials";
 
+function heroImageInputsBase(): NonNullable<RegisteredComponent["inputs"]> {
+  return [
+    { name: "eyebrow", type: "text", defaultValue: "New for Fall" },
+    {
+      name: "heading",
+      type: "text",
+      required: true,
+      defaultValue: "Gear for the long way round",
+    },
+    {
+      name: "subheading",
+      type: "longText",
+      defaultValue:
+        "Technical outerwear and travel gear built to survive the trip you're actually taking.",
+    },
+    { name: "ctaLabel", type: "text", defaultValue: "Shop the collection" },
+    { name: "ctaHref", type: "url", defaultValue: "/shop" },
+  ];
+}
+
+function heroImageFieldInputs(): NonNullable<RegisteredComponent["inputs"]> {
+  return [
+    {
+      name: "heroImage",
+      type: "file",
+      allowedFileTypes: ["jpeg", "jpg", "png", "webp", "svg"],
+    },
+    {
+      name: "heroImageAlt",
+      type: "text",
+      required: true,
+      helperText: "Required - gated by the accessibility workflow rule on Hero images.",
+    },
+    {
+      name: "cloudinaryImage",
+      type: "cloudinaryImage",
+      helperText:
+        "Optional - pick an asset from the existing Cloudinary library instead of Builder's Asset Manager. Overrides the image above when set.",
+    },
+  ];
+}
+
 export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
   {
     component: Hero,
     name: "Hero",
-    group: "Fieldnote",
+    group: "Heros",
     image:
       "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%231B3A2F'/%3E%3Cpath d='M8 26l6-9 5 6 4-5 9 8H8z' fill='%23D4622A'/%3E%3C/svg%3E",
     // Renders a single <section>; noWrap avoids a redundant Builder-added
@@ -175,8 +225,7 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
         name: "heroImageAlt",
         type: "text",
         required: true,
-        helperText:
-          "Required — gated by the accessibility workflow rule on Hero images.",
+        helperText: "Required - gated by the accessibility workflow rule on Hero images.",
         showIf: (options: Map<string, unknown>) => options.get("variant") !== "text",
       },
       // ENTERPRISE PATTERN: DAM COEXISTENCE (Builder Asset Manager + Cloudinary)
@@ -185,7 +234,7 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
       // `heroImage` (type: "file") stays the default, Builder-Asset-Manager-
       // backed path every other image input in this file uses; this field
       // exists specifically to demonstrate the coexistence pattern for a
-      // customer with an existing Cloudinary library — see the large
+      // customer with an existing Cloudinary library - see the large
       // top-of-file comment in `plugins/cloudinary-picker/plugin.tsx` for
       // the full "why," and that package's README for why this field type
       // needs a one-time manual Builder Space Settings registration step
@@ -197,27 +246,59 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
         name: "cloudinaryImage",
         type: "cloudinaryImage",
         helperText:
-          "Optional — pick an asset from the existing Cloudinary library instead of Builder's Asset Manager. Overrides the image above when set.",
+          "Optional - pick an asset from the existing Cloudinary library instead of Builder's Asset Manager. Overrides the image above when set.",
         showIf: (options: Map<string, unknown>) => options.get("variant") !== "text",
       },
     ],
   },
   {
-    component: Section,
-    name: "Section",
-    group: "Fieldnote",
+    component: TextHero,
+    name: "Text Hero",
+    group: "Heros",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23E8DFD2'/%3E%3Crect x='10' y='15' width='20' height='4' fill='%2314161A'/%3E%3Crect x='13' y='22' width='14' height='3' fill='%235C6670'/%3E%3C/svg%3E",
+    noWrap: true,
+    // No `variant` input - hard-coded to "text" in HeroVariants.tsx, so a
+    // content editor dragging this in doesn't see a variant dropdown.
+    inputs: heroImageInputsBase(),
+  },
+  {
+    component: ImageHero,
+    name: "Image Hero",
+    group: "Heros",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%231B3A2F'/%3E%3Cpath d='M8 26l6-9 5 6 4-5 9 8H8z' fill='%23D4622A'/%3E%3C/svg%3E",
+    noWrap: true,
+    // No `variant` input - hard-coded to "image" in HeroVariants.tsx.
+    inputs: [...heroImageInputsBase(), ...heroImageFieldInputs()],
+  },
+  {
+    component: SplitHero,
+    name: "Split Hero",
+    group: "Heros",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23F7F5F1'/%3E%3Crect x='5' y='9' width='14' height='22' fill='%23E8DFD2'/%3E%3Crect x='22' y='13' width='13' height='4' fill='%2314161A'/%3E%3Crect x='22' y='20' width='13' height='3' fill='%235C6670'/%3E%3C/svg%3E",
+    noWrap: true,
+    // No `variant` input - hard-coded to "split" in HeroVariants.tsx.
+    inputs: [...heroImageInputsBase(), ...heroImageFieldInputs()],
+  },
+  {
+    component: Container,
+    name: "Container",
+    group: "Layout",
     image:
       "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23F7F5F1'/%3E%3Crect x='7' y='11' width='26' height='6' fill='%235C6670'/%3E%3Crect x='7' y='23' width='26' height='6' fill='%23D4622A'/%3E%3C/svg%3E",
     noWrap: true,
     canHaveChildren: true,
-    // A Section wraps arbitrary page content, so it isn't scoped to any
-    // `models` list and doesn't restrict child component types generally —
+    // A Container wraps arbitrary page content, so it isn't scoped to any
+    // `models` list and doesn't restrict child component types generally -
     // it's the universal layout wrapper. The one guardrail worth having is
-    // stopping editors from nesting a Section inside another Section, which
-    // breaks the width/padding/background assumptions of both.
+    // stopping editors from nesting a Container inside another Container (or
+    // its deprecated "Section" alias below), which breaks the
+    // width/padding/background assumptions of both.
     childRequirements: {
-      message: "Sections can't be nested. Add content directly, or start a new Section.",
-      query: { "component.name": { $nin: ["Section"] } },
+      message: "Containers can't be nested. Add content directly, or start a new Container.",
+      query: { "component.name": { $nin: ["Container", "Section"] } },
     },
     inputs: [
       {
@@ -241,9 +322,73 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
     ],
   },
   {
+    // DEPRECATED ALIAS - kept only so existing Builder content entries whose
+    // blocks reference component name "Section" keep rendering. Points at
+    // the exact same Container render function/props as the registration
+    // above; new content should use "Container" instead. Don't remove this
+    // until existing content has been migrated off the "Section" name.
+    component: Container,
+    name: "Section",
+    group: "Layout",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23F7F5F1'/%3E%3Crect x='7' y='11' width='26' height='6' fill='%235C6670'/%3E%3Crect x='7' y='23' width='26' height='6' fill='%23D4622A'/%3E%3C/svg%3E",
+    noWrap: true,
+    canHaveChildren: true,
+    childRequirements: {
+      message: "Sections can't be nested. Add content directly, or start a new Container.",
+      query: { "component.name": { $nin: ["Container", "Section"] } },
+    },
+    inputs: [
+      {
+        name: "width",
+        type: "text",
+        enum: ["narrow", "default", "wide", "full"],
+        defaultValue: "default",
+      },
+      {
+        name: "padding",
+        type: "text",
+        enum: ["none", "sm", "md", "lg"],
+        defaultValue: "md",
+      },
+      {
+        name: "background",
+        type: "text",
+        enum: ["surface", "surfaceAlt", "primary", "sand"],
+        defaultValue: "surface",
+      },
+    ],
+  },
+  {
+    component: IconCard,
+    name: "Icon Card",
+    group: "Cards",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23FFFFFF' stroke='%23E8DFD2' stroke-width='2'/%3E%3Ccircle cx='14' cy='14' r='6' fill='none' stroke='%23D4622A' stroke-width='2'/%3E%3Crect x='9' y='24' width='22' height='3' fill='%2314161A'/%3E%3Crect x='9' y='29' width='16' height='2.5' fill='%235C6670'/%3E%3C/svg%3E",
+    noWrap: true,
+    // A single atomic card (not list/array-based like FeatureCards), meant
+    // to be dragged in individually and repeated via Builder's built-in
+    // Columns/Box layout components.
+    inputs: [
+      {
+        name: "icon",
+        type: "text",
+        enum: ["compass", "mountain", "shield", "truck", "leaf", "tag"],
+        defaultValue: "compass",
+      },
+      { name: "title", type: "text", defaultValue: "Built for the trail" },
+      {
+        name: "description",
+        type: "longText",
+        defaultValue:
+          "A short description of this feature or benefit, ready to repeat inside a Columns or Box layout.",
+      },
+    ],
+  },
+  {
     component: ProductCard,
     name: "ProductCard",
-    group: "Fieldnote",
+    group: "Cards",
     image:
       "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23FFFFFF' stroke='%23E8DFD2' stroke-width='2'/%3E%3Crect x='9' y='8' width='22' height='16' fill='%23E8DFD2'/%3E%3Crect x='9' y='27' width='16' height='4' fill='%2314161A'/%3E%3C/svg%3E",
     noWrap: true,
@@ -350,7 +495,7 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
       {
         name: "apiUrl",
         type: "url",
-        // Defaults to the mock-Shopify-backed Route Handler (pattern 2 —
+        // Defaults to the mock-Shopify-backed Route Handler (pattern 2 -
         // see the top-of-file ENTERPRISE PATTERN block and
         // src/app/api/shopify-products/route.ts). Point this at any other
         // JSON endpoint to demo a different commerce/PIM backend without
@@ -390,7 +535,7 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
             icon: "shield",
             title: "Lifetime repair guarantee",
             description:
-              "Every Fieldnote piece is backed by free repairs for as long as you own it — rips, zippers, seams, all of it.",
+              "Every Fieldnote piece is backed by free repairs for as long as you own it - rips, zippers, seams, all of it.",
           },
           {
             icon: "truck",
@@ -417,7 +562,7 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
             name: "image",
             type: "file",
             allowedFileTypes: ["jpeg", "jpg", "png", "webp", "svg"],
-            helperText: "Optional — overrides the icon when set.",
+            helperText: "Optional - overrides the icon when set.",
           },
           { name: "title", type: "text", defaultValue: "Feature title" },
           {
@@ -443,8 +588,8 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
         name: "content",
         type: "richText",
         defaultValue:
-          "<p>Every Fieldnote jacket, pack and boot goes through the same test before it ships: a season in the hands of our own guides, on the actual trips we sell you on.</p><p>That's the difference between gear that looks rugged on a shelf and gear that <strong>holds up on day nine of a ten-day traverse</strong> \u2014 worn, rained on, and packed away wet more times than we'd like to admit.</p><p>Read more about how we source materials and test in the field on our <a href=\"/sustainability\">sustainability page</a>.</p>",
-        helperText: "Rendered as sanitized HTML \u2014 all output is passed through DOMPurify.",
+          "<p>Every Fieldnote jacket, pack and boot goes through the same test before it ships: a season in the hands of our own guides, on the actual trips we sell you on.</p><p>That's the difference between gear that looks rugged on a shelf and gear that <strong>holds up on day nine of a ten-day traverse</strong> - worn, rained on, and packed away wet more times than we'd like to admit.</p><p>Read more about how we source materials and test in the field on our <a href=\"/sustainability\">sustainability page</a>.</p>",
+        helperText: "Rendered as sanitized HTML - all output is passed through DOMPurify.",
       },
       {
         name: "width",
@@ -483,17 +628,17 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
           {
             question: "What's your return policy?",
             answer:
-              "<p>Unworn gear can be returned within 60 days for a full refund. Worn gear that fails on the trail is covered by our lifetime repair guarantee instead of a return \u2014 <a href=\"/help\">contact us</a> and we'll sort out a repair or replacement.</p>",
+              "<p>Unworn gear can be returned within 60 days for a full refund. Worn gear that fails on the trail is covered by our lifetime repair guarantee instead of a return - <a href=\"/help\">contact us</a> and we'll sort out a repair or replacement.</p>",
           },
           {
             question: "How long does shipping take?",
             answer:
-              "<p>Standard shipping arrives in 3\u20135 business days and is free on orders over $75. Expedited 2-day shipping is available at checkout if you're packing for a trip this week.</p>",
+              "<p>Standard shipping arrives in 3-5 business days and is free on orders over $75. Expedited 2-day shipping is available at checkout if you're packing for a trip this week.</p>",
           },
           {
             question: "How do I find my size?",
             answer:
-              "<p>Every product page has a size chart under the fit details. If you're between sizes, we generally recommend sizing up for layering room \u2014 our <a href=\"/help\">size guide</a> covers each category in more depth.</p>",
+              "<p>Every product page has a size chart under the fit details. If you're between sizes, we generally recommend sizing up for layering room - our <a href=\"/help\">size guide</a> covers each category in more depth.</p>",
           },
         ],
         subFields: [
@@ -501,7 +646,7 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
           {
             name: "answer",
             type: "richText",
-            defaultValue: "<p>Rendered as sanitized HTML \u2014 all output is passed through DOMPurify.</p>",
+            defaultValue: "<p>Rendered as sanitized HTML - all output is passed through DOMPurify.</p>",
           },
         ],
       },
@@ -520,7 +665,7 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
         type: "text",
         defaultValue: "Search jackets, packs, boots...",
         helperText:
-          "Filters the local product catalog client-side (name + category). Algolia isn't configured yet — this is a real, working filter, not a stub.",
+          "Filters the local product catalog client-side (name + category). Algolia isn't configured yet - this is a real, working filter, not a stub.",
       },
     ],
   },
@@ -581,7 +726,7 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
         name: "endpoint",
         type: "url",
         helperText:
-          "No CRM is connected yet. Leave blank to simulate a real submission with a genuine success state; set a URL to POST leads there instead \u2014 no other change needed.",
+          "No CRM is connected yet. Leave blank to simulate a real submission with a genuine success state; set a URL to POST leads there instead - no other change needed.",
       },
     ],
   },
@@ -637,7 +782,7 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
         name: "topic",
         type: "reference",
         model: "help-topic",
-        helperText: "Optional \u2014 narrows the surface query to one topic.",
+        helperText: "Optional - narrows the surface query to one topic.",
         showIf: (options: Map<string, unknown>) => options.get("source") === "surface",
       },
     ],
