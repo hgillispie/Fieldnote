@@ -10,31 +10,35 @@ import {
   type SectionWidth,
 } from "./SectionShell";
 
-type SectionBackground = "surface" | "surfaceAlt" | "primary" | "sand";
+type ContainerBackground = "surface" | "surfaceAlt" | "primary" | "sand";
 
-interface SectionProps {
+export interface ContainerProps {
   width?: SectionWidth;
   padding?: SectionSpacing;
-  background?: SectionBackground;
+  background?: ContainerBackground;
   attributes?: Record<string, unknown>;
   children?: ReactNode;
 }
 
 // Static lookup map only, per the no-interpolated-Tailwind-classes rule.
-const BACKGROUND_CLASSES: Record<SectionBackground, string> = {
+const BACKGROUND_CLASSES: Record<ContainerBackground, string> = {
   surface: "bg-surface text-ink",
   surfaceAlt: "bg-surface-alt text-ink",
   primary: "bg-primary text-surface",
   sand: "bg-sand text-ink",
 };
 
-export function Section({
+// Registered in src/builder-registry.ts under both "Container" (current
+// name) and "Section" (deprecated alias, kept so existing content blocks
+// that reference component name "Section" keep resolving) - both names
+// point at this same render function.
+export function Container({
   width = "default",
   padding = "md",
   background = "surface",
   attributes,
   children,
-}: SectionProps) {
+}: ContainerProps) {
   return (
     <section {...attributes} className={BACKGROUND_CLASSES[background]}>
       <div

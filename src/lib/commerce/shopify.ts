@@ -104,6 +104,14 @@ interface StorefrontGraphQLResponse {
 // MOCK RESPONSE — realistic Shopify Storefront API JSON shape (gid://
 // identifiers, priceRange/minVariantPrice, edges/node connections) so the
 // mapping logic below is identical to what a real response needs.
+//
+// FIX (was broken): every `images.edges[].node.url` used to point at
+// `cdn.shopify.com/s/files/mock/*.jpg` — URLs that were never real, so every
+// card rendered a blank/broken image box regardless of the timeout/fallback
+// logic working correctly. Swapped in real, publicly-hosted Unsplash image
+// URLs (verified reachable) so the external-data-source demo path actually
+// shows working product photography end to end, without depending on a
+// live third-party commerce API during a sales call.
 async function mockShopifyStorefrontRequest(): Promise<StorefrontGraphQLResponse> {
   // Simulated network latency, so loading/timeout states in callers are
   // exercised the same way they would be against a real upstream.
@@ -116,16 +124,16 @@ async function mockShopifyStorefrontRequest(): Promise<StorefrontGraphQLResponse
           {
             node: {
               id: "gid://shopify/Product/8391029348401",
-              title: "Summit Down Parka",
-              handle: "summit-down-parka",
-              tags: ["new-arrival"],
-              priceRange: { minVariantPrice: { amount: "429.00", currencyCode: "USD" } },
+              title: "Cascade 3L Shell",
+              handle: "cascade-3l-shell",
+              tags: ["best-seller"],
+              priceRange: { minVariantPrice: { amount: "389.00", currencyCode: "USD" } },
               images: {
                 edges: [
                   {
                     node: {
-                      url: "https://cdn.shopify.com/s/files/mock/summit-down-parka.jpg",
-                      altText: "Summit Down Parka in charcoal",
+                      url: "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?auto=format&fit=crop&w=800&q=80",
+                      altText: "Cascade 3L Shell rain jacket, worn skiing down a mountain",
                     },
                   },
                 ],
@@ -135,16 +143,16 @@ async function mockShopifyStorefrontRequest(): Promise<StorefrontGraphQLResponse
           {
             node: {
               id: "gid://shopify/Product/8391029348402",
-              title: "Ridge Trail Runners",
-              handle: "ridge-trail-runners",
+              title: "Traverse Mid GTX",
+              handle: "traverse-mid-gtx",
               tags: [],
-              priceRange: { minVariantPrice: { amount: "149.00", currencyCode: "USD" } },
+              priceRange: { minVariantPrice: { amount: "219.00", currencyCode: "USD" } },
               images: {
                 edges: [
                   {
                     node: {
-                      url: "https://cdn.shopify.com/s/files/mock/ridge-trail-runners.jpg",
-                      altText: "Ridge Trail Runners in slate blue",
+                      url: "https://images.unsplash.com/photo-1520639888713-7851133b1ed0?auto=format&fit=crop&w=800&q=80",
+                      altText: "Traverse Mid GTX hiking boots, laced up",
                     },
                   },
                 ],
@@ -154,16 +162,16 @@ async function mockShopifyStorefrontRequest(): Promise<StorefrontGraphQLResponse
           {
             node: {
               id: "gid://shopify/Product/8391029348403",
-              title: "Alpine Base Layer",
-              handle: "alpine-base-layer",
-              tags: ["best-seller"],
-              priceRange: { minVariantPrice: { amount: "79.00", currencyCode: "USD" } },
+              title: "Longhaul 45L Pack",
+              handle: "longhaul-45l-pack",
+              tags: ["new-arrival"],
+              priceRange: { minVariantPrice: { amount: "259.00", currencyCode: "USD" } },
               images: {
                 edges: [
                   {
                     node: {
-                      url: "https://cdn.shopify.com/s/files/mock/alpine-base-layer.jpg",
-                      altText: "Alpine Base Layer in heather grey",
+                      url: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=800&q=80",
+                      altText: "Longhaul 45L travel backpack",
                     },
                   },
                 ],
@@ -181,8 +189,46 @@ async function mockShopifyStorefrontRequest(): Promise<StorefrontGraphQLResponse
                 edges: [
                   {
                     node: {
-                      url: "https://cdn.shopify.com/s/files/mock/waypoint-duffel-60l.jpg",
-                      altText: "Waypoint Duffel 60L in olive",
+                      url: "https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?auto=format&fit=crop&w=800&q=80",
+                      altText: "Waypoint Duffel 60L in leather brown",
+                    },
+                  },
+                ],
+              },
+            },
+          },
+          {
+            node: {
+              id: "gid://shopify/Product/8391029348405",
+              title: "Basin Trail Bottle",
+              handle: "basin-trail-bottle",
+              tags: [],
+              priceRange: { minVariantPrice: { amount: "32.00", currencyCode: "USD" } },
+              images: {
+                edges: [
+                  {
+                    node: {
+                      url: "https://images.unsplash.com/photo-1523362628745-0c100150b504?auto=format&fit=crop&w=800&q=80",
+                      altText: "Basin Trail Bottle, stainless steel water bottle",
+                    },
+                  },
+                ],
+              },
+            },
+          },
+          {
+            node: {
+              id: "gid://shopify/Product/8391029348406",
+              title: "Ridge Line 2P Tent",
+              handle: "ridge-line-2p-tent",
+              tags: ["new-arrival"],
+              priceRange: { minVariantPrice: { amount: "349.00", currencyCode: "USD" } },
+              images: {
+                edges: [
+                  {
+                    node: {
+                      url: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&w=800&q=80",
+                      altText: "Ridge Line 2P Tent, interior view looking out at the forest",
                     },
                   },
                 ],
