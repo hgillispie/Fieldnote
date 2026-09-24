@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 // ENTERPRISE PATTERN: SECTION MODELS — the "keep it in code" side of the
 // tradeoff
@@ -32,8 +35,8 @@ import Link from "next/link";
 //     short of the `childRequirements` guardrails individual components
 //     define (see `Section`'s anti-self-nesting rule).
 //
-//   HARDCODED CHROME (this file, and `Footer.tsx` — plain Server Components,
-//   no Builder registration, no `{...attributes}`, rendered directly in
+//   HARDCODED CHROME (this file, and `Footer.tsx` — plain components, no
+//   Builder registration, no `{...attributes}`, rendered directly in
 //   `src/app/layout.tsx` so every route gets them automatically):
 //     Tradeoff: zero editorial flexibility (a marketer cannot add/remove a
 //     nav link without a code change and a deploy) in exchange for total
@@ -65,25 +68,214 @@ const NAV_LINKS = [
   { href: "/card", label: "Card" },
 ];
 
-export function Navbar() {
+const CART_ITEM_COUNT = 2;
+
+function MarkIcon() {
   return (
-    <header className="border-b border-sand bg-surface">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link href="/" className="font-display text-xl text-ink">
-          Fieldnote
+    <svg
+      viewBox="0 0 24 24"
+      width="22"
+      height="22"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 20 10 5l3 6 3-4 5 13" />
+    </svg>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="20"
+      height="20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </svg>
+  );
+}
+
+function AccountIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="20"
+      height="20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M4.5 20c1.5-4 4.2-6 7.5-6s6 2 7.5 6" />
+    </svg>
+  );
+}
+
+function CartIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="20"
+      height="20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M6 8h12l-1.2 11.02a2 2 0 0 1-2 1.98H9.2a2 2 0 0 1-2-1.98L6 8Z" />
+      <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+    </svg>
+  );
+}
+
+function MenuIcon({ open }: { open: boolean }) {
+  if (open) {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        width="22"
+        height="22"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        aria-hidden="true"
+      >
+        <path d="M6 6l12 12M18 6 6 18" />
+      </svg>
+    );
+  }
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="22"
+      height="22"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <path d="M4 7h16M4 12h16M4 17h16" />
+    </svg>
+  );
+}
+
+export function Navbar() {
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  return (
+    <header
+      className={`sticky top-0 z-50 bg-primary text-sand transition-shadow ${
+        scrolled ? "shadow-lg shadow-black/20" : "shadow-none"
+      }`}
+    >
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
+        <Link
+          href="/"
+          className="flex items-center gap-2 text-surface"
+          onClick={() => setMobileOpen(false)}
+        >
+          <span className="text-accent">
+            <MarkIcon />
+          </span>
+          <span className="font-display text-xl font-semibold uppercase tracking-wide">
+            Fieldnote
+          </span>
         </Link>
-        <nav className="flex gap-6">
+
+        <nav className="hidden md:flex md:items-center md:gap-8">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="text-sm font-medium text-ink transition hover:text-accent"
+              className="text-sm font-medium tracking-wide text-sand/90 transition hover:text-accent"
             >
               {link.label}
             </Link>
           ))}
         </nav>
+
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            aria-label="Search"
+            className="hidden rounded-full p-2 text-sand/90 transition hover:bg-surface/10 hover:text-accent sm:inline-flex"
+          >
+            <SearchIcon />
+          </button>
+          <Link
+            href="/account"
+            aria-label="Account"
+            className="rounded-full p-2 text-sand/90 transition hover:bg-surface/10 hover:text-accent"
+          >
+            <AccountIcon />
+          </Link>
+          <Link
+            href="/cart"
+            aria-label="Cart"
+            className="relative rounded-full p-2 text-sand/90 transition hover:bg-surface/10 hover:text-accent"
+          >
+            <CartIcon />
+            {CART_ITEM_COUNT > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold leading-none text-surface">
+                {CART_ITEM_COUNT}
+              </span>
+            )}
+          </Link>
+          <button
+            type="button"
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileOpen}
+            onClick={() => setMobileOpen((open) => !open)}
+            className="ml-1 rounded-full p-2 text-sand/90 transition hover:bg-surface/10 hover:text-accent md:hidden"
+          >
+            <MenuIcon open={mobileOpen} />
+          </button>
+        </div>
       </div>
+
+      {mobileOpen && (
+        <nav className="border-t border-surface/10 bg-primary md:hidden">
+          <div className="mx-auto flex max-w-6xl flex-col px-6 py-3">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setMobileOpen(false)}
+                className="py-2.5 text-sm font-medium tracking-wide text-sand/90 transition hover:text-accent"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </nav>
+      )}
     </header>
   );
 }
