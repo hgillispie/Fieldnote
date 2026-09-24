@@ -3,6 +3,10 @@ import { fetchOneEntry } from "@builder.io/sdk-react";
 import { builderFetch } from "@/lib/builder-fetch";
 import { RenderBuilderContent } from "@/components/RenderBuilderContent";
 import { BUILDER_API_KEY } from "@/lib/builder-config";
+import {
+  resolveLocaleFromFirstSegment,
+  resolveRequestedLocale,
+} from "@/lib/locale";
 
 /**
  * ENTERPRISE PATTERN: MULTIPLE PAGE MODEL TYPES
@@ -72,59 +76,36 @@ import { BUILDER_API_KEY } from "@/lib/builder-config";
 
 // ENTERPRISE PATTERN: LOCALIZATION
 //
-// A small, explicit allowlist of supported locale prefixes, each mapped to
-// the "locale group default" it falls back to if a page hasn't been
-// translated into that exact locale yet. This mirrors Builder's own locale-
-// group concept (e.g. an "ar-*" group defaulting to `ar-AE`) at the
-// application-routing layer, for the one thing Builder's own locale
-// fallback doesn't cover automatically: which URL prefix maps to which
-// locale code in the first place.
+// Locale resolution (URL-prefix allowlist + the requested -> group-default ->
+// space-default fallback chain) lives in `src/lib/locale.ts`, shared with
+// `src/app/page.tsx`, so both routes fall back identically — see that file
+// for the full fallback-chain explanation.
 //
-// FULL FALLBACK CHAIN: requested locale -> locale group default -> space default
-// Example: a visitor requests `/ar-SA/sale` (Saudi Arabic). `ar-SA` isn't in
-// `SUPPORTED_LOCALES` below, but it shares the `ar` group, whose default is
-// `ar-AE`. If `fetchOneEntry({ locale: "ar-AE", ... })` still returns nothing
-// (that specific page was never translated even into the group default), the
-// final fallback is the space default locale (`Default` — Builder's own
-// term for "the locale a space's content was authored in before any
-// localization was added"), passed as `locale: undefined` so the SDK returns
-// whatever the base entry has. A visitor always sees *something* in this
-// chain; worst case, they see the space-default-locale version of a page
-// that hasn't been translated into their language yet, never a blank page.
-const LOCALE_GROUP_DEFAULTS: Record<string, string> = {
-  "fr-fr": "fr-FR",
-  "fr-ca": "fr-FR",
-  "ar-ae": "ar-AE",
-  "ar-sa": "ar-AE",
-  "en-us": "Default",
-};
+// `?locale=` ALWAYS WINS OVER THE URL PREFIX
+// `resolveRequestedLocale` below checks the query param first — this is the
+// live-demo override: `/help/returns?locale=ar-AE` switches locale via the
+// query string even though `/help/returns` has no `/ar-AE/` prefix segment.
 
-function resolveLocaleFromFirstSegment(segment: string | undefined): {
-  locale: string | undefined;
-  consumedSegment: boolean;
-} {
-  if (!segment) return { locale: undefined, consumedSegment: false };
-  const normalized = segment.toLowerCase();
-  const groupDefault = LOCALE_GROUP_DEFAULTS[normalized];
-  if (!groupDefault) return { locale: undefined, consumedSegment: false };
-  // "Default" is Builder's own sentinel for the space's base locale — pass
-  // `undefined` rather than the literal string so `fetchOneEntry` resolves
-  // the un-localized entry instead of looking for a locale named "Default".
-  return { locale: groupDefault === "Default" ? undefined : groupDefault, consumedSegment: true };
-}
-
-// Same ISR policy as the homepage (see src/app/page.tsx) — no
-// force-dynamic, applied uniformly across every page/landing-page URL this
-// route resolves rather than decided per-entry.
+// Reading `searchParams` (for the `?locale=` override) carries the same
+// dynamic-rendering cost as the homepage's own locale override — see that
+// file's comment block. Applied uniformly across every page/landing-page URL
+// this route resolves rather than decided per-entry.
 export const revalidate = 60;
 
 interface CatchAllPageProps {
   params: Promise<{ slug: string[] }>;
+  searchParams: Promise<{ locale?: string | string[] }>;
 }
 
-export default async function CatchAllPage({ params }: CatchAllPageProps) {
+export default async function CatchAllPage({
+  params,
+  searchParams,
+}: CatchAllPageProps) {
   const { slug } = await params;
-  const { locale, consumedSegment } = resolveLocaleFromFirstSegment(slug[0]);
+  const { locale: queryLocale } = await searchParams;
+  const { locale: pathLocale, consumedSegment } =
+    resolveLocaleFromFirstSegment(slug[0]);
+  const locale = resolveRequestedLocale(queryLocale, pathLocale);
   const pathSegments = consumedSegment ? slug.slice(1) : slug;
 
   if (pathSegments.length === 0) {
@@ -141,7 +122,7 @@ export default async function CatchAllPage({ params }: CatchAllPageProps) {
     fetch: builderFetch,
     apiKey: BUILDER_API_KEY,
     model: "landing-page",
-    userAttributes: { urlPath },
+    userAttributes: { urlPath, locale },
     locale,
   }).catch(() => null);
 
@@ -151,7 +132,7 @@ export default async function CatchAllPage({ params }: CatchAllPageProps) {
       fetch: builderFetch,
       apiKey: BUILDER_API_KEY,
       model: "page",
-      userAttributes: { urlPath },
+      userAttributes: { urlPath, locale },
       locale,
     }).catch(() => null));
 
@@ -163,7 +144,7 @@ export default async function CatchAllPage({ params }: CatchAllPageProps) {
 
   return (
     <main className="flex-1">
-      <RenderBuilderContent content={content} model={model} />
+      <RenderBuilderContent content={content} model={model} locale={locale} />
     </main>
   );
 }

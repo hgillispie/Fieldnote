@@ -2,6 +2,7 @@ import { fetchOneEntry } from "@builder.io/sdk-react";
 import { RenderBuilderContent } from "@/components/RenderBuilderContent";
 import { BUILDER_API_KEY } from "@/lib/builder-config";
 import { builderFetch } from "@/lib/builder-fetch";
+import { resolveRequestedLocale } from "@/lib/locale";
 
 // ENTERPRISE PATTERN: SERVER-SIDE RENDERING
 //
@@ -46,6 +47,17 @@ import { builderFetch } from "@/lib/builder-fetch";
 // homepage for a full server round-trip on every single request, for every
 // visitor, personalized or not.
 //
+// LOCALE IS THE ONE DELIBERATE EXCEPTION TO THAT RULE
+// Reading `searchParams` below carries the exact same dynamic-rendering cost
+// as `cookies()`/`headers()` — Next.js can't know a request's query string
+// ahead of time, so this route is no longer static once it depends on it.
+// That trade is made on purpose here, scoped to locale only: a live sales
+// demo needs `?locale=ar-AE` on `/` to reliably switch content on every
+// request, which a 60-second ISR cache keyed only on `urlPath` can't do.
+// `revalidate = 60` is left in place as the *default* caching policy for the
+// no-query-param path; Next.js still renders this route dynamically whenever
+// `searchParams` is read, regardless of that value.
+//
 // The three real options an enterprise team weighs here (see
 // `src/app/demo-switcher/page.tsx` for a worked example of the first one):
 //   1. Confine personalized/dynamic rendering to routes that are already
@@ -67,7 +79,14 @@ import { builderFetch } from "@/lib/builder-fetch";
 // route already pays the dynamic-rendering cost for its own reasons.
 export const revalidate = 60;
 
-export default async function HomePage() {
+interface HomePageProps {
+  searchParams: Promise<{ locale?: string | string[] }>;
+}
+
+export default async function HomePage({ searchParams }: HomePageProps) {
+  const { locale: queryLocale } = await searchParams;
+  const locale = resolveRequestedLocale(queryLocale);
+
   // ENTERPRISE PATTERN: EXTERNAL DATA INTO COMPONENTS — the Builder-content
   // equivalent of the Shopify fallback in `/api/shopify-products/route.ts`.
   // Fails soft: a Builder CDN hiccup degrades to an empty render, never a
@@ -77,7 +96,9 @@ export default async function HomePage() {
     model: "homepage",
     userAttributes: {
       urlPath: "/",
+      locale,
     },
+    locale,
     fetch: builderFetch,
   }).catch((error) => {
     console.error("Failed to fetch homepage content from Builder:", error);
@@ -86,7 +107,7 @@ export default async function HomePage() {
 
   return (
     <main className="flex-1">
-      <RenderBuilderContent content={content} model="homepage" />
+      <RenderBuilderContent content={content} model="homepage" locale={locale} />
     </main>
   );
 }
