@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SECTION_HEADING_CLASSES, SectionShell } from "./SectionShell";
 
 type TestimonialsLayout = "grid" | "carousel";
 
@@ -77,13 +78,11 @@ export function Testimonials({
   }
 
   return (
-    <div {...attributes}>
-      {heading && (
-        <h2 className="mb-6 font-display text-2xl text-ink">{heading}</h2>
-      )}
+    <SectionShell attributes={attributes} spacing="md">
+      {heading && <h2 className={SECTION_HEADING_CLASSES}>{heading}</h2>}
 
       {layout === "grid" ? (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
           {items.map((item, index) => (
             <TestimonialCard key={`${item.authorName}-${index}`} item={item} />
           ))}
@@ -96,7 +95,7 @@ export function Testimonials({
         >
           <TestimonialCard item={items[currentIndex]} />
 
-          <div className="mt-4 flex items-center justify-center gap-4">
+          <div className="mt-6 flex items-center justify-center gap-4">
             <button
               type="button"
               onClick={goToPrevious}
@@ -134,14 +133,14 @@ export function Testimonials({
           </div>
         </div>
       )}
-    </div>
+    </SectionShell>
   );
 }
 
 function TestimonialCard({ item }: { item: Testimonial }) {
   return (
-    <figure className="flex h-full flex-col gap-4 rounded-lg border border-sand bg-surface p-6">
-      <blockquote className="text-sm leading-relaxed text-ink">&ldquo;{item.quote}&rdquo;</blockquote>
+    <figure className="flex h-full flex-col gap-5 rounded-lg border border-sand bg-surface p-6 md:p-8">
+      <blockquote className="text-base leading-relaxed text-ink">&ldquo;{item.quote}&rdquo;</blockquote>
       <figcaption className="mt-auto flex items-center gap-3">
         {item.avatar ? (
           <img
