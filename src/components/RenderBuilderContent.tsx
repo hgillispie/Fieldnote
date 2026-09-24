@@ -8,6 +8,7 @@ import { BUILDER_API_KEY } from "@/lib/builder-config";
 interface RenderBuilderContentProps {
   content: BuilderContent | null;
   model: string;
+  locale?: string;
 }
 
 /**
@@ -40,6 +41,7 @@ interface RenderBuilderContentProps {
 export function RenderBuilderContent({
   content,
   model,
+  locale,
 }: RenderBuilderContentProps) {
   if (!content && !isPreviewing()) {
     return null;
@@ -51,6 +53,7 @@ export function RenderBuilderContent({
       model={model}
       apiKey={BUILDER_API_KEY}
       customComponents={CUSTOM_COMPONENTS}
+      locale={locale}
     />
   );
 }

@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { DEMO_LOCALE_OPTIONS } from "@/lib/locale";
 
 // ENTERPRISE PATTERN: SECTION MODELS — the "keep it in code" side of the
 // tradeoff
@@ -178,6 +180,43 @@ function MenuIcon({ open }: { open: boolean }) {
   );
 }
 
+// Demo-only: switches the `?locale=` query param so a live sales demo can
+// change locale without hand-editing the URL. Isolated in its own
+// `Suspense` boundary (below) since `useSearchParams` requires one.
+function LocaleSwitcher() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const current = searchParams.get("locale") ?? "";
+
+  function handleChange(event: { target: { value: string } }) {
+    const value = event.target.value;
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) {
+      params.set("locale", value);
+    } else {
+      params.delete("locale");
+    }
+    const query = params.toString();
+    router.push(pathname + (query ? "?" + query : ""));
+  }
+
+  return (
+    <select
+      aria-label="Locale"
+      value={current}
+      onChange={handleChange}
+      className="rounded-full border border-surface/20 bg-primary px-2 py-1 text-xs font-medium text-sand/90 transition hover:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+    >
+      {DEMO_LOCALE_OPTIONS.map((option) => (
+        <option key={option.value} value={option.value} className="text-ink">
+          {option.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -222,6 +261,9 @@ export function Navbar() {
         </nav>
 
         <div className="flex items-center gap-1">
+          <Suspense fallback={null}>
+            <LocaleSwitcher />
+          </Suspense>
           <button
             type="button"
             aria-label="Search"
