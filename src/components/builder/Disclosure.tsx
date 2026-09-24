@@ -1,6 +1,7 @@
 "use client";
 
 import DOMPurify from "isomorphic-dompurify";
+import { resolveReference, type BuilderReference } from "@/lib/builder-refs";
 
 interface LocalizedValue {
   "@type"?: string;
@@ -8,19 +9,17 @@ interface LocalizedValue {
   [locale: string]: string | undefined;
 }
 
-interface ReferencedDisclosure {
-  data?: {
-    key?: string;
-    body?: string | LocalizedValue;
-    jurisdiction?: string;
-    effectiveDate?: string | number;
-    reviewedBy?: string;
-    version?: string;
-  };
+interface DisclosureData {
+  key?: string;
+  body?: string | LocalizedValue;
+  jurisdiction?: string;
+  effectiveDate?: string | number;
+  reviewedBy?: string;
+  version?: string;
 }
 
 interface DisclosureProps {
-  disclosure?: ReferencedDisclosure | null;
+  disclosure?: BuilderReference<DisclosureData> | null;
   collapsed?: boolean;
   label?: string;
   attributes?: Record<string, unknown>;
@@ -62,7 +61,7 @@ export function Disclosure({
   label = "View important disclosures",
   attributes,
 }: DisclosureProps) {
-  const resolved = disclosure?.data;
+  const resolved = resolveReference(disclosure);
   const bodyHtml = resolveLocalizedValue(resolved?.body) || FALLBACK_DISCLOSURE.body;
   const jurisdiction = resolved?.jurisdiction ?? FALLBACK_DISCLOSURE.jurisdiction;
   const effectiveDate = formatDate(resolved?.effectiveDate ?? FALLBACK_DISCLOSURE.effectiveDate);

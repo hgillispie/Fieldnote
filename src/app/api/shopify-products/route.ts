@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { fetchEntries } from "@builder.io/sdk-react";
+import { builderFetch } from "@/lib/builder-fetch";
 import { fetchShopifyProducts } from "@/lib/commerce/shopify";
 import { BUILDER_API_KEY } from "@/lib/builder-config";
 
@@ -69,6 +70,7 @@ export async function GET() {
     // "degrade to Builder content" half of the pattern — if the external
     // commerce API is down, editors' own product entries stand in for it.
     const fallback = await fetchEntries({
+      fetch: builderFetch,
       apiKey: BUILDER_API_KEY,
       model: "product",
       limit: 4,

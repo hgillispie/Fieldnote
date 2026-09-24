@@ -1,6 +1,7 @@
 import { fetchOneEntry } from "@builder.io/sdk-react";
 import { RenderBuilderContent } from "@/components/RenderBuilderContent";
 import { BUILDER_API_KEY } from "@/lib/builder-config";
+import { builderFetch } from "@/lib/builder-fetch";
 
 // ENTERPRISE PATTERN: SERVER-SIDE RENDERING
 //
@@ -77,6 +78,7 @@ export default async function HomePage() {
     userAttributes: {
       urlPath: "/",
     },
+    fetch: builderFetch,
   }).catch((error) => {
     console.error("Failed to fetch homepage content from Builder:", error);
     return null;

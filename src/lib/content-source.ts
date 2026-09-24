@@ -1,4 +1,5 @@
 import { fetchOneEntry } from "@builder.io/sdk-react";
+import { builderFetch } from "@/lib/builder-fetch";
 import DOMPurify from "isomorphic-dompurify";
 import { getContentfulEntryBySlug } from "@/lib/contentful/client";
 import { BUILDER_API_KEY } from "@/lib/builder-config";
@@ -88,6 +89,7 @@ async function resolveArticleFromContentful(slug: string): Promise<ResolvedArtic
 
 async function resolveArticleFromBuilder(slug: string): Promise<ResolvedArticle | null> {
   const entry = await fetchOneEntry({
+    fetch: builderFetch,
     apiKey: BUILDER_API_KEY,
     model: "article",
     query: { "data.slug": slug },

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { fetchOneEntry } from "@builder.io/sdk-react";
+import { builderFetch } from "@/lib/builder-fetch";
 import { DEMO_SEGMENTS, getDemoUserAttributes } from "@/lib/demo-targeting";
 import { PersonaButtons } from "./PersonaButtons";
 import { BUILDER_API_KEY } from "@/lib/builder-config";
@@ -30,6 +31,7 @@ export default async function DemoSwitcherPage() {
   // whichever variation matches server-side — no client-side re-fetch, no
   // flash of untargeted content.
   const targetedContent = await fetchOneEntry({
+    fetch: builderFetch,
     apiKey: BUILDER_API_KEY,
     model: "homepage",
     userAttributes: { urlPath: "/", ...active },

@@ -35,6 +35,8 @@
 // recommendations, cart upsell) shares one fetch/cache/fallback
 // implementation instead of each reimplementing it.
 import { useEffect, useState } from "react";
+import { resolveReference, type BuilderReference } from "@/lib/builder-refs";
+import { SECTION_HEADING_CLASSES, SectionShell } from "./SectionShell";
 
 type ProductGridSource = "builder" | "shopify" | "api";
 type ProductGridColumns = "2" | "3" | "4";
@@ -49,19 +51,17 @@ interface GridProduct {
   badge?: string;
 }
 
-interface ReferencedProduct {
-  data?: {
-    name?: string;
-    price?: number;
-    currency?: string;
-    slug?: string;
-    images?: Array<{ image?: string }>;
-    badges?: Array<{ badge?: string }>;
-  };
+interface ProductData {
+  name?: string;
+  price?: number;
+  currency?: string;
+  slug?: string;
+  images?: Array<{ image?: string }>;
+  badges?: Array<{ badge?: string }>;
 }
 
 interface BuilderListItem {
-  product?: ReferencedProduct | null;
+  product?: BuilderReference<ProductData> | null;
 }
 
 interface ProductGridProps {
@@ -132,7 +132,7 @@ function formatPrice(price: number, currency: string) {
 
 function toGridProducts(items: BuilderListItem[]): GridProduct[] {
   return items
-    .map((item) => item.product?.data)
+    .map((item) => resolveReference(item.product))
     .filter(
       (data): data is NonNullable<typeof data> =>
         !!data?.name && typeof data.price === "number",
@@ -217,11 +217,9 @@ export function ProductGrid({
       : remoteItems ?? FALLBACK_PRODUCTS;
 
   return (
-    <div {...attributes}>
-      {heading && (
-        <h2 className="mb-6 font-display text-2xl text-ink">{heading}</h2>
-      )}
-      <div className={`grid gap-6 ${COLUMN_CLASSES[columns]}`}>
+    <SectionShell attributes={attributes} spacing="md">
+      {heading && <h2 className={SECTION_HEADING_CLASSES}>{heading}</h2>}
+      <div className={`grid gap-6 lg:gap-8 ${COLUMN_CLASSES[columns]}`}>
         {items.map((item) => (
           <a
             key={item.href}
@@ -246,7 +244,7 @@ export function ProductGrid({
                 </span>
               )}
             </div>
-            <div className="flex flex-col gap-1 p-4">
+            <div className="flex flex-col gap-1.5 p-5">
               <h3 className="font-display text-base text-ink">{item.name}</h3>
               <p className="text-sm text-slate">
                 {formatPrice(item.price, item.currency)}
@@ -255,6 +253,6 @@ export function ProductGrid({
           </a>
         ))}
       </div>
-    </div>
+    </SectionShell>
   );
 }

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { fetchOneEntry } from "@builder.io/sdk-react";
+import { builderFetch } from "@/lib/builder-fetch";
 import { RenderBuilderContent } from "@/components/RenderBuilderContent";
 import { BUILDER_API_KEY } from "@/lib/builder-config";
 
@@ -137,6 +138,7 @@ export default async function CatchAllPage({ params }: CatchAllPageProps) {
   // generic catch-all). Both calls fail soft to `null`, matching every other
   // Builder fetch in this app.
   const landingPage = await fetchOneEntry({
+    fetch: builderFetch,
     apiKey: BUILDER_API_KEY,
     model: "landing-page",
     userAttributes: { urlPath },
@@ -146,6 +148,7 @@ export default async function CatchAllPage({ params }: CatchAllPageProps) {
   const content =
     landingPage ??
     (await fetchOneEntry({
+      fetch: builderFetch,
       apiKey: BUILDER_API_KEY,
       model: "page",
       userAttributes: { urlPath },

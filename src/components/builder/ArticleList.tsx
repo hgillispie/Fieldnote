@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { BUILDER_API_KEY } from "@/lib/builder-config";
+import { resolveReference, type BuilderReference } from "@/lib/builder-refs";
 
 type ArticleListSource = "manual" | "surface";
 type ArticleListColumns = "2" | "3" | "4";
@@ -27,21 +28,19 @@ interface ReferencedTopic {
   id?: string;
 }
 
-interface ReferencedArticle {
-  data?: {
-    title?: string;
-    slug?: string;
-    excerpt?: string;
-    heroImage?: string;
-    heroImageAlt?: string;
-    author?: ReferencedAuthor;
-    surface?: ArticleSurface;
-    readingMinutes?: number;
-  };
+interface ArticleData {
+  title?: string;
+  slug?: string;
+  excerpt?: string;
+  heroImage?: string;
+  heroImageAlt?: string;
+  author?: ReferencedAuthor;
+  surface?: ArticleSurface;
+  readingMinutes?: number;
 }
 
 interface BuilderListItem {
-  article?: ReferencedArticle | null;
+  article?: BuilderReference<ArticleData> | null;
 }
 
 interface ArticleListProps {
@@ -111,7 +110,7 @@ const FALLBACK_ARTICLES: GridArticle[] = [
 
 function toGridArticles(items: BuilderListItem[]): GridArticle[] {
   return items
-    .map((item) => item.article?.data)
+    .map((item) => resolveReference(item.article))
     .filter(
       (data): data is NonNullable<typeof data> => !!data?.title && !!data.slug,
     )
@@ -121,7 +120,7 @@ function toGridArticles(items: BuilderListItem[]): GridArticle[] {
       excerpt: data.excerpt,
       heroImage: data.heroImage,
       heroImageAlt: data.heroImageAlt,
-      authorName: data.author?.data?.name,
+      authorName: resolveReference(data.author)?.name,
       surface: data.surface ?? "blog",
       readingMinutes: data.readingMinutes,
     }));
@@ -172,7 +171,7 @@ async function fetchSurfaceArticles(
       excerpt: data.excerpt,
       heroImage: data.heroImage,
       heroImageAlt: data.heroImageAlt,
-      authorName: data.author?.value?.data?.name ?? data.author?.data?.name,
+      authorName: resolveReference(data.author)?.name,
       surface: data.surface ?? "blog",
       readingMinutes: data.readingMinutes,
     }));

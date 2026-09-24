@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
+import { SECTION_HEADING_CLASSES, SectionShell } from "./SectionShell";
 
 type FeatureCardsColumns = "2" | "3" | "4";
 type FeatureCardIcon = "compass" | "mountain" | "shield" | "truck" | "leaf" | "tag";
@@ -109,15 +110,13 @@ export function FeatureCards({
   const items = cards && cards.length > 0 ? cards : FALLBACK_CARDS;
 
   return (
-    <div {...attributes}>
-      {heading && (
-        <h2 className="mb-6 font-display text-2xl text-ink">{heading}</h2>
-      )}
-      <div className={`grid gap-6 ${COLUMN_CLASSES[columns]}`}>
+    <SectionShell attributes={attributes} spacing="md">
+      {heading && <h2 className={SECTION_HEADING_CLASSES}>{heading}</h2>}
+      <div className={`grid gap-6 lg:gap-8 ${COLUMN_CLASSES[columns]}`}>
         {items.map((card, index) => (
           <div
             key={`${card.title}-${index}`}
-            className="flex flex-col gap-3 rounded-lg border border-sand bg-surface p-6"
+            className="flex flex-col gap-3 rounded-lg border border-sand bg-surface p-6 md:p-8"
           >
             {card.image ? (
               <img
@@ -143,6 +142,6 @@ export function FeatureCards({
           </div>
         ))}
       </div>
-    </div>
+    </SectionShell>
   );
 }

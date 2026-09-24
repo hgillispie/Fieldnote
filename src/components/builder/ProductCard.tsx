@@ -1,21 +1,21 @@
 "use client";
 
+import { resolveReference, type BuilderReference } from "@/lib/builder-refs";
+
 type ProductCardSource = "product" | "static";
 
-interface ReferencedProduct {
-  data?: {
-    name?: string;
-    price?: number;
-    currency?: string;
-    slug?: string;
-    images?: Array<{ image?: string }>;
-    badges?: Array<{ badge?: string }>;
-  };
+interface ProductData {
+  name?: string;
+  price?: number;
+  currency?: string;
+  slug?: string;
+  images?: Array<{ image?: string }>;
+  badges?: Array<{ badge?: string }>;
 }
 
 interface ProductCardProps {
   source?: ProductCardSource;
-  product?: ReferencedProduct | null;
+  product?: BuilderReference<ProductData> | null;
   staticName?: string;
   staticPrice?: number;
   staticCurrency?: string;
@@ -48,7 +48,7 @@ export function ProductCard({
   // "product" pulls live data from a referenced `product` entry; "static"
   // (the default) uses the fields below — this is the fallback every
   // data-bound component needs, since the referenced entry may not resolve.
-  const resolved = source === "product" ? product?.data : undefined;
+  const resolved = source === "product" ? resolveReference(product) : undefined;
 
   const name = resolved?.name ?? staticName;
   const price = resolved?.price ?? staticPrice;
