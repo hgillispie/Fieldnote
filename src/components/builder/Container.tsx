@@ -28,10 +28,7 @@ const BACKGROUND_CLASSES: Record<ContainerBackground, string> = {
   sand: "bg-sand text-ink",
 };
 
-// Registered in src/builder-registry.ts under both "Container" (current
-// name) and "Section" (deprecated alias, kept so existing content blocks
-// that reference component name "Section" keep resolving) - both names
-// point at this same render function.
+// Registered in src/builder-registry.ts as "Container".
 export function Container({
   width = "default",
   padding = "md",

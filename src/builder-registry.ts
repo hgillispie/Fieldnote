@@ -121,7 +121,7 @@
  * INSERT MENU CATEGORIES ("group" below)
  * "Heros" groups Hero and its three fixed-variant wrappers (Text Hero, Image
  * Hero, Split Hero). "Cards" groups the atomic Icon Card alongside
- * ProductCard. "Layout" groups Container and its deprecated "Section" alias.
+ * ProductCard. "Layout" groups Container.
  * Everything else keeps its existing "Fieldnote" group.
  */
 import { register } from "@builder.io/sdk-react";
@@ -293,50 +293,11 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
     // A Container wraps arbitrary page content, so it isn't scoped to any
     // `models` list and doesn't restrict child component types generally -
     // it's the universal layout wrapper. The one guardrail worth having is
-    // stopping editors from nesting a Container inside another Container (or
-    // its deprecated "Section" alias below), which breaks the
-    // width/padding/background assumptions of both.
+    // stopping editors from nesting a Container inside another Container,
+    // which breaks the width/padding/background assumptions of both.
     childRequirements: {
       message: "Containers can't be nested. Add content directly, or start a new Container.",
-      query: { "component.name": { $nin: ["Container", "Section"] } },
-    },
-    inputs: [
-      {
-        name: "width",
-        type: "text",
-        enum: ["narrow", "default", "wide", "full"],
-        defaultValue: "default",
-      },
-      {
-        name: "padding",
-        type: "text",
-        enum: ["none", "sm", "md", "lg"],
-        defaultValue: "md",
-      },
-      {
-        name: "background",
-        type: "text",
-        enum: ["surface", "surfaceAlt", "primary", "sand"],
-        defaultValue: "surface",
-      },
-    ],
-  },
-  {
-    // DEPRECATED ALIAS - kept only so existing Builder content entries whose
-    // blocks reference component name "Section" keep rendering. Points at
-    // the exact same Container render function/props as the registration
-    // above; new content should use "Container" instead. Don't remove this
-    // until existing content has been migrated off the "Section" name.
-    component: Container,
-    name: "Section",
-    group: "Layout",
-    image:
-      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23F7F5F1'/%3E%3Crect x='7' y='11' width='26' height='6' fill='%235C6670'/%3E%3Crect x='7' y='23' width='26' height='6' fill='%23D4622A'/%3E%3C/svg%3E",
-    noWrap: true,
-    canHaveChildren: true,
-    childRequirements: {
-      message: "Sections can't be nested. Add content directly, or start a new Container.",
-      query: { "component.name": { $nin: ["Container", "Section"] } },
+      query: { "component.name": { $nin: ["Container"] } },
     },
     inputs: [
       {
