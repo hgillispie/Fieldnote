@@ -36,6 +36,7 @@
 // implementation instead of each reimplementing it.
 import { useEffect, useState } from "react";
 import { resolveReference, type BuilderReference } from "@/lib/builder-refs";
+import { firstBadge, type ProductBadges } from "@/lib/product-badges";
 import { SECTION_HEADING_CLASSES, SectionShell } from "./SectionShell";
 
 type ProductGridSource = "builder" | "shopify" | "api";
@@ -57,7 +58,7 @@ interface ProductData {
   currency?: string;
   slug?: string;
   images?: Array<{ image?: string }>;
-  badges?: Array<{ badge?: string }>;
+  badges?: ProductBadges;
 }
 
 interface BuilderListItem {
@@ -144,7 +145,7 @@ function toGridProducts(items: BuilderListItem[]): GridProduct[] {
       image: data.images?.[0]?.image,
       imageAlt: data.name as string,
       href: data.slug ? `/products/${data.slug}` : "/shop",
-      badge: data.badges?.[0]?.badge,
+      badge: firstBadge(data.badges),
     }));
 }
 

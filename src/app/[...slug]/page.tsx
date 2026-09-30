@@ -124,6 +124,7 @@ export default async function CatchAllPage({
     model: "landing-page",
     userAttributes: { urlPath, locale },
     locale,
+    enrich: true,
   }).catch(() => null);
 
   const content =
@@ -134,6 +135,7 @@ export default async function CatchAllPage({
       model: "page",
       userAttributes: { urlPath, locale },
       locale,
+      enrich: true,
     }).catch(() => null));
 
   if (!content) {

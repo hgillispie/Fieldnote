@@ -28,6 +28,35 @@ const products = [
   },
 ];
 
+// Recorded from the live `homepage` entry. Deliberately a product that is NOT
+// in FALLBACK_PRODUCTS, so a fallback render can't pass these assertions.
+const PARKA_IMAGE = "https://images.pexels.com/photos/4273239/pexels-photo-4273239.jpeg";
+
+const liveParka = [
+  {
+    product: {
+      "@type": "@builder.io/core:Reference",
+      id: "e3c0d3947b9b4d779d0c7b4efea23d1c",
+      model: "product",
+      value: {
+        id: "e3c0d3947b9b4d779d0c7b4efea23d1c",
+        data: {
+          name: "Ridgeline Down Parka",
+          price: 549,
+          currency: "USD",
+          slug: "ridgeline-down-parka",
+          images: [{ image: PARKA_IMAGE }],
+          badges: ["Limited"],
+        },
+      },
+    },
+  },
+];
+
+const unresolved = [
+  { product: { "@type": "@builder.io/core:Reference", id: "draft", model: "product" } },
+];
+
 describe("ProductGrid", () => {
   it("renders the referenced product's real image", () => {
     const html = renderToStaticMarkup(
@@ -43,6 +72,20 @@ describe("ProductGrid", () => {
       <ProductGrid source="builder" products={products} />,
     );
     expect(html).not.toContain("bg-gradient-to-br from-surface-alt to-sand");
+  });
+
+  it("renders a live non-fallback product with its image and string badge", () => {
+    const html = renderToStaticMarkup(<ProductGrid source="builder" products={liveParka} />);
+    expect(html).toContain("Ridgeline Down Parka");
+    expect(html).toContain(PARKA_IMAGE);
+    expect(html).toContain("/products/ridgeline-down-parka");
+    expect(html).toContain(">Limited<");
+    expect(html).not.toContain("Basin Merino Tee");
+  });
+
+  it("falls back when a reference arrives unresolved, e.g. a draft entry", () => {
+    const html = renderToStaticMarkup(<ProductGrid source="builder" products={unresolved} />);
+    expect(html).toContain("Basin Merino Tee");
   });
 
   it("still falls back when no products are configured", () => {

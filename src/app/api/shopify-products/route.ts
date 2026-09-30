@@ -3,6 +3,7 @@ import { fetchEntries } from "@builder.io/sdk-react";
 import { builderFetch } from "@/lib/builder-fetch";
 import { fetchShopifyProducts } from "@/lib/commerce/shopify";
 import { BUILDER_API_KEY } from "@/lib/builder-config";
+import { firstBadge } from "@/lib/product-badges";
 
 // ENTERPRISE PATTERN: EXTERNAL DATA INTO COMPONENTS (Shopify-style), server side
 //
@@ -87,7 +88,7 @@ export async function GET() {
           image: entry.data?.images?.[0]?.image,
           imageAlt: entry.data?.name,
           href: entry.data?.slug ? `/products/${entry.data.slug}` : "/shop",
-          badge: entry.data?.badges?.[0]?.badge,
+          badge: firstBadge(entry.data?.badges),
         })),
     );
   }

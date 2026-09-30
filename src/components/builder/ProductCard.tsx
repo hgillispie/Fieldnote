@@ -1,6 +1,7 @@
 "use client";
 
 import { resolveReference, type BuilderReference } from "@/lib/builder-refs";
+import { firstBadge, type ProductBadges } from "@/lib/product-badges";
 
 type ProductCardSource = "product" | "static";
 
@@ -10,7 +11,7 @@ interface ProductData {
   currency?: string;
   slug?: string;
   images?: Array<{ image?: string }>;
-  badges?: Array<{ badge?: string }>;
+  badges?: ProductBadges;
 }
 
 interface ProductCardProps {
@@ -55,7 +56,7 @@ export function ProductCard({
   const currency = resolved?.currency ?? staticCurrency;
   const href = resolved?.slug ? `/products/${resolved.slug}` : staticHref;
   const image = resolved?.images?.[0]?.image ?? staticImage;
-  const badge = resolved?.badges?.[0]?.badge ?? staticBadge;
+  const badge = firstBadge(resolved?.badges) ?? staticBadge;
   const imageAlt = resolved?.name ?? staticImageAlt;
 
   return (
