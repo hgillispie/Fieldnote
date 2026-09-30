@@ -66,6 +66,7 @@ import { DEMO_LOCALE_OPTIONS } from "@/lib/locale";
 // global navigation on a high-traffic property.
 const NAV_LINKS = [
   { href: "/help", label: "Help" },
+  { href: "/blog", label: "Blog" },
   { href: "/pro", label: "Pro" },
   { href: "/card", label: "Card" },
 ];
