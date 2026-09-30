@@ -28,9 +28,9 @@ const LINK_COLUMNS: { heading: string; links: { href: string; label: string }[] 
     links: [
       { href: "/help", label: "Help Center" },
       { href: "/help/shipping-returns", label: "Shipping & Returns" },
-      { href: "/help/size-guide", label: "Size Guide" },
+      { href: "/help/how-do-i-find-my-size", label: "Size Guide" },
       { href: "/help/repair-guarantee", label: "Repair Guarantee" },
-      { href: "/help/track-order", label: "Track Order" },
+      { href: "/help/tracking-your-order", label: "Track Order" },
     ],
   },
   {

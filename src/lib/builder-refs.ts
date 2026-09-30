@@ -19,3 +19,24 @@ export function resolveReference<TData>(
 ): TData | undefined {
   return ref?.value?.data ?? ref?.data;
 }
+
+interface LocalizedValue {
+  "@type"?: string;
+  Default?: string;
+  [locale: string]: string | undefined;
+}
+
+/**
+ * A `localized: true` field arrives as `{"@type":
+ * "@builder.io/core:LocalizedValue", "Default": "...", "fr-FR": "..."}`
+ * unless a `locale` was passed to the fetch, in which case the SDK already
+ * resolves it to a plain string. Handles both shapes so callers don't need
+ * to know which one they got.
+ */
+export function resolveLocalizedValue(
+  value: string | LocalizedValue | null | undefined,
+  locale = "Default",
+): string | undefined {
+  if (typeof value === "string") return value;
+  return value?.[locale] ?? value?.Default;
+}

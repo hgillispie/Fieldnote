@@ -1,4 +1,6 @@
+import { cache } from "react";
 import { fetchOneEntry } from "@builder.io/sdk-react";
+import type { BuilderContent } from "@builder.io/sdk-react";
 import { builderFetch } from "@/lib/builder-fetch";
 import DOMPurify from "isomorphic-dompurify";
 import { getContentfulEntryBySlug } from "@/lib/contentful/client";
@@ -16,53 +18,62 @@ import { BUILDER_API_KEY } from "@/lib/builder-config";
  * are alive and load-bearing at the same time — nothing gets ripped out
  * until its replacement is already carrying real traffic.
  *
- * HOW THIS WORKS HERE
- * `MIGRATED_TO_BUILDER` is a per-content-type flag. For any content type
- * where the flag is `false`, this resolver reads from the (mocked)
- * Contentful Delivery API client in `src/lib/contentful/client.ts`. Flip a
- * single entry to `true` once that content type's editors have been trained
- * on Builder, its content has been backfilled, and its templates have been
- * rebuilt as Builder models/components — and every page using this resolver
- * starts reading from Builder instead, with no other code change. Nothing
- * about the calling page (`src/app/help/[slug]/page.tsx`) needs to know or
- * care which system actually served the content; it only ever sees the
- * normalized `ResolvedArticle` shape below.
+ * DEFAULT BEHAVIOR: BUILDER IS THE SOURCE OF TRUTH, FULL STOP
+ * `fetchHelpArticle(slug)` — the function `/help/[slug]` calls by default —
+ * only ever reads the real `article` model in Builder (surface="help"). It
+ * does not consult the mocked Contentful client at all. This app's entire
+ * point is demonstrating Builder as the CMS, so a real, published Builder
+ * article must resolve by slug reliably and by default; nothing is allowed
+ * to silently intercept that and serve stale/mocked content instead. It
+ * returns the raw `BuilderContent` entry (not a flattened shape) because a
+ * real article's body lives in its `blocks` tree, rendered through
+ * `<RenderBuilderContent>` — there is no flat `body` string field to read.
  *
- * WHY NOT MIGRATE EVERYTHING AT ONCE
+ * THE STRANGLER-FIG DEMO IS A SEPARATE, EXPLICIT, OPT-IN PATH
+ * `resolveArticleWithMigrationDemo(slug)` is the function that reproduces
+ * the old, pre-migration behavior — for a content type not yet flagged as
+ * migrated, it reads the mocked Contentful client instead of Builder — but
+ * it only runs when a caller explicitly asks for it. `src/app/help/[slug]
+ * /page.tsx` wires this up behind an explicit `?cms=legacy` query param, so
+ * the coexistence story is still fully demoable live (visiting
+ * `/help/choosing-a-rain-shell?cms=legacy` shows the pre-migration
+ * Contentful-backed render) without that path ever winning for an arbitrary
+ * slug that a visitor reaches through a normal link.
+ *
+ * WHY NOT MIGRATE EVERYTHING AT ONCE (the demo this preserves)
  * A big-bang cutover means every content type's editors, templates, and
  * governance rules have to be ready on the same day, and any single content
  * type not being ready blocks the whole migration. Content-type-by-content-
  * type migration lets a team ship the easiest, lowest-risk content type
- * first (often a marketing landing page type, rarely a regulated/legal
- * content type), prove the pattern in production, and only then move on to
- * the next type — while the Contentful contract keeps serving everything
- * that hasn't moved yet, with zero downtime and zero "flag day" risk.
- *
- * RUNNING BOTH PLATFORMS SIDE BY SIDE, AND EVENTUALLY DECOMMISSIONING CONTENTFUL
- * In a real migration:
- *   1. Both CMSs' content APIs are live and queried by the app simultaneously
- *      (exactly what this file does), gated by this same kind of flag map —
- *      usually backed by a real feature-flag service (LaunchDarkly, a config
- *      table) rather than a hardcoded object, so flipping a content type's
- *      migration status doesn't require a deploy.
- *   2. Content for a given type is backfilled into Builder (bulk import via
- *      the Content API, or the CMS MCP tooling this repo itself uses) before
- *      its flag flips, so there's no gap where content exists in neither
- *      system.
- *   3. Once every content type's flag is `true`, the Contentful-reading code
- *      paths (this file's `false` branch, and `src/lib/contentful/client.ts`
- *      itself) are deleted, and the Contentful contract is let lapse or
- *      formally decommissioned. Nothing about this file needs to be rewritten
- *      to reach that end state — it's deleted, not refactored, once its job
- *      is done.
+ * first, prove the pattern in production, and only then move on to the next
+ * type — while the Contentful contract keeps serving everything that hasn't
+ * moved yet, with zero downtime and zero "flag day" risk. `MIGRATED_TO_BUILDER`
+ * below still models that per-content-type flag for the opt-in demo path;
+ * it no longer gates the default, everyday resolution every other page in
+ * this app depends on.
  */
 export const MIGRATED_TO_BUILDER: Record<string, boolean> = {
-  // Flip to `true` once the help-center article template and its editors
-  // have moved over — the resolver below will start reading the `article`
-  // Builder model instead, with zero changes needed in
-  // `src/app/help/[slug]/page.tsx`.
+  // Only consulted by `resolveArticleWithMigrationDemo`, i.e. only when a
+  // caller explicitly opts into the legacy-CMS demo path (see above).
   article: false,
 };
+
+// React.cache dedupes this within a single request lifecycle, matching the
+// pattern `src/app/blog/[slug]/page.tsx` uses for the same model.
+export const fetchHelpArticle = cache(
+  async (slug: string): Promise<BuilderContent | null> => {
+    return fetchOneEntry({
+      fetch: builderFetch,
+      apiKey: BUILDER_API_KEY,
+      model: "article",
+      query: {
+        "data.slug": slug,
+        "data.surface": "help",
+      },
+      enrich: true,
+    }).catch(() => null);
+  },
+);
 
 export interface ResolvedArticle {
   title: string;
@@ -87,6 +98,15 @@ async function resolveArticleFromContentful(slug: string): Promise<ResolvedArtic
   };
 }
 
+/**
+ * Only reachable from `resolveArticleWithMigrationDemo` once
+ * `MIGRATED_TO_BUILDER.article` is flipped to `true` — i.e. not on any path
+ * exercised by default. Kept flattening to a `body` string for parity with
+ * the Contentful shape this demo is contrasting against; real Builder
+ * articles store their body in `blocks` instead (see `fetchHelpArticle`
+ * above), so this intentionally simplified branch only reflects an entry's
+ * structured fields, not its block content.
+ */
 async function resolveArticleFromBuilder(slug: string): Promise<ResolvedArticle | null> {
   const entry = await fetchOneEntry({
     fetch: builderFetch,
@@ -104,7 +124,7 @@ async function resolveArticleFromBuilder(slug: string): Promise<ResolvedArticle 
   return {
     title: entry.data.title ?? "",
     slug: entry.data.slug ?? slug,
-    bodyHtml: entry.data.body ?? "",
+    bodyHtml: entry.data.excerpt ?? "",
     authorName: entry.data.author?.value?.data?.name ?? "Fieldnote",
     topicLabel: entry.data.topic?.value?.data?.name ?? "",
     source: "builder",
@@ -112,13 +132,15 @@ async function resolveArticleFromBuilder(slug: string): Promise<ResolvedArticle 
 }
 
 /**
- * The one function a page calls — routes to Contentful or Builder based on
- * `MIGRATED_TO_BUILDER.article`, and always returns sanitized HTML in
- * `bodyHtml` regardless of which system it came from (Contentful's rich text
- * needs the same DOMPurify treatment as Builder's `richText` fields — see
- * `.builder/rules/components.mdc`'s `dangerouslySetInnerHTML` rule).
+ * The explicit, opt-in strangler-fig demo path — see the file-level comment
+ * block above. Only called when a caller (currently: the `?cms=legacy` query
+ * param on `/help/[slug]`) deliberately asks to see the pre-migration
+ * behavior. Routes to Contentful or Builder based on
+ * `MIGRATED_TO_BUILDER.article`, exactly like the old default used to.
  */
-export async function resolveArticle(slug: string): Promise<ResolvedArticle | null> {
+export async function resolveArticleWithMigrationDemo(
+  slug: string,
+): Promise<ResolvedArticle | null> {
   const resolved = MIGRATED_TO_BUILDER.article
     ? await resolveArticleFromBuilder(slug)
     : await resolveArticleFromContentful(slug);
