@@ -35,6 +35,7 @@ export default async function DemoSwitcherPage() {
     apiKey: BUILDER_API_KEY,
     model: "homepage",
     userAttributes: { urlPath: "/", ...active },
+    enrich: true,
   }).catch(() => null);
 
   return (

@@ -99,6 +99,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       locale,
     },
     locale,
+    enrich: true,
     fetch: builderFetch,
   }).catch((error) => {
     console.error("Failed to fetch homepage content from Builder:", error);
