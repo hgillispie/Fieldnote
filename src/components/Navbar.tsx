@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { DEMO_LOCALE_OPTIONS } from "@/lib/locale";
+import { SHOP_CATEGORIES } from "@/lib/shop-categories";
 
 // ENTERPRISE PATTERN: SECTION MODELS — the "keep it in code" side of the
 // tradeoff
@@ -69,21 +70,6 @@ const NAV_LINKS = [
   { href: "/blog", label: "Blog" },
   { href: "/pro", label: "Pro" },
   { href: "/card", label: "Card" },
-];
-
-// Mirrors the `product.category` enum in `src/app/products/[slug]/page.tsx`
-// (`ProductCategory`), plus one curated, non-category filter ("New
-// Arrivals") -- same split `Footer.tsx`'s "Shop" column already uses.
-// Kept here as a single source so the navbar dropdown, the mobile
-// accordion, and the footer don't drift out of sync as categories change.
-const SHOP_CATEGORIES = [
-  { href: "/shop/jackets", label: "Jackets & Shells" },
-  { href: "/shop/packs", label: "Packs & Bags" },
-  { href: "/shop/footwear", label: "Footwear" },
-  { href: "/shop/layers", label: "Layering" },
-  { href: "/shop/accessories", label: "Accessories" },
-  { href: "/shop/camp-travel", label: "Camp & Travel" },
-  { href: "/shop/new", label: "New Arrivals" },
 ];
 
 const CART_ITEM_COUNT = 2;
@@ -304,8 +290,8 @@ export function Navbar() {
               <div className="min-w-56 rounded-lg border border-surface/10 bg-primary py-2 shadow-xl shadow-black/30">
                 {SHOP_CATEGORIES.map((category) => (
                   <Link
-                    key={category.href}
-                    href={category.href}
+                    key={category.slug}
+                    href={`/shop/${category.slug}`}
                     className="block px-4 py-2 text-sm text-sand/90 transition hover:bg-surface/10 hover:text-accent"
                   >
                     {category.label}
@@ -397,8 +383,8 @@ export function Navbar() {
                 <div className="flex flex-col pb-2 pl-3">
                   {SHOP_CATEGORIES.map((category) => (
                     <Link
-                      key={category.href}
-                      href={category.href}
+                      key={category.slug}
+                      href={`/shop/${category.slug}`}
                       onClick={() => setMobileOpen(false)}
                       className="py-2 text-sm text-sand/80 transition hover:text-accent"
                     >
