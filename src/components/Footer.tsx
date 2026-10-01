@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SHOP_CATEGORIES } from "@/lib/shop-categories";
 
 // ENTERPRISE PATTERN: SECTION MODELS — hardcoded alongside Navbar; see the
 // full comment block in `src/components/Navbar.tsx` for the section-models-
@@ -15,13 +16,15 @@ import Link from "next/link";
 const LINK_COLUMNS: { heading: string; links: { href: string; label: string }[] }[] = [
   {
     heading: "Shop",
-    links: [
-      { href: "/shop/jackets", label: "Jackets & Shells" },
-      { href: "/shop/packs", label: "Packs & Bags" },
-      { href: "/shop/footwear", label: "Footwear" },
-      { href: "/shop/layers", label: "Layering" },
-      { href: "/shop/new", label: "New Arrivals" },
-    ],
+    // Sourced from the shared SHOP_CATEGORIES list (see that file) so this
+    // column can't drift out of sync with the navbar dropdown or the
+    // /shop/[category] route the way it previously did (this column used to
+    // hand-maintain its own, incomplete, four-item copy of the category
+    // list).
+    links: SHOP_CATEGORIES.map((category) => ({
+      href: `/shop/${category.slug}`,
+      label: category.label,
+    })),
   },
   {
     heading: "Help",
