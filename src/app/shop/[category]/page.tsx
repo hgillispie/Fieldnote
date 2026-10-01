@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { fetchEntries, fetchOneEntry } from "@builder.io/sdk-react";
+import { fetchEntries, fetchOneEntry, isPreviewing } from "@builder.io/sdk-react";
 import { builderFetch } from "@/lib/builder-fetch";
 import { BUILDER_API_KEY } from "@/lib/builder-config";
 import { RenderBuilderContent } from "@/components/RenderBuilderContent";
@@ -60,7 +60,9 @@ export const revalidate = 60;
 
 interface ShopCategoryPageProps {
   params: Promise<{ category: string }>;
-  searchParams: Promise<{ sort?: string | string[] }>;
+  searchParams: Promise<
+    { sort?: string | string[] } & Record<string, string | string[] | undefined>
+  >;
 }
 
 interface ProductListItem {
@@ -163,6 +165,29 @@ export default async function ShopCategoryPage({
     const fallback = await fetchShopFallbackPage(slug);
 
     if (!fallback) {
+      // See src/app/[...slug]/page.tsx's matching comment: a brand-new,
+      // unpublished /shop/<slug> landing-page/page entry has no published
+      // content yet, so the fallback fetch above correctly comes back null
+      // for a real visitor — that case still 404s below. But when Builder's
+      // own visual editor is previewing this same URL, hard-404ing here
+      // would stop `<RenderBuilderContent>`'s `<Content>` from ever
+      // mounting, and with it the client-side recovery fetch that pulls in
+      // the draft content — surfacing as a "Preview Load Error" instead of
+      // a working preview.
+      const rawSearchParams = await searchParams;
+
+      if (isPreviewing(rawSearchParams as Record<string, string | string[]>)) {
+        const previewParam = rawSearchParams["builder.preview"];
+        const previewModel =
+          (Array.isArray(previewParam) ? previewParam[0] : previewParam) || "page";
+
+        return (
+          <main className="flex-1">
+            <RenderBuilderContent content={null} model={previewModel} />
+          </main>
+        );
+      }
+
       notFound();
     }
 

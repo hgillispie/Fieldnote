@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { fetchOneEntry } from "@builder.io/sdk-react";
+import { fetchOneEntry, isPreviewing } from "@builder.io/sdk-react";
 import { builderFetch } from "@/lib/builder-fetch";
 import { RenderBuilderContent } from "@/components/RenderBuilderContent";
 import { BUILDER_API_KEY } from "@/lib/builder-config";
@@ -94,7 +94,9 @@ export const revalidate = 60;
 
 interface CatchAllPageProps {
   params: Promise<{ slug: string[] }>;
-  searchParams: Promise<{ locale?: string | string[] }>;
+  searchParams: Promise<
+    { locale?: string | string[] } & Record<string, string | string[] | undefined>
+  >;
 }
 
 export default async function CatchAllPage({
@@ -102,7 +104,8 @@ export default async function CatchAllPage({
   searchParams,
 }: CatchAllPageProps) {
   const { slug } = await params;
-  const { locale: queryLocale } = await searchParams;
+  const rawSearchParams = await searchParams;
+  const { locale: queryLocale } = rawSearchParams;
   const { locale: pathLocale, consumedSegment } =
     resolveLocaleFromFirstSegment(slug[0]);
   const locale = resolveRequestedLocale(queryLocale, pathLocale);
@@ -139,6 +142,37 @@ export default async function CatchAllPage({
     }).catch(() => null));
 
   if (!content) {
+    // BUILDER PREVIEW ESCAPE HATCH
+    //
+    // A brand-new landing-page/page entry has no published content yet, so
+    // the two fetches above correctly come back null for a real visitor —
+    // that case still 404s below. But Builder's own visual editor loads
+    // this exact live URL to preview/edit that same unpublished draft, and
+    // `notFound()` renders Next's not-found tree instead of this page's
+    // component tree, which means `<RenderBuilderContent>` (and the
+    // `<Content>` component inside it) never mounts. Builder's SDK relies on
+    // `<Content>` mounting client-side to detect `isPreviewing()` and fetch
+    // the draft override itself (see RenderBuilderContent.tsx) — skip it
+    // entirely and the editor's preview iframe just sees a hard 404 with no
+    // Builder script ever attached, surfacing as a "Preview Load Error"
+    // ("Your site is not loading as expected") with no way to recover.
+    //
+    // So: only 404 for a real request. When the request is Builder's editor
+    // previewing this URL, render the (contentless) wrapper anyway so its
+    // client-side recovery fetch gets a chance to run. `builder.preview`
+    // tells us which model is being edited; default to "page" if absent.
+    if (isPreviewing(rawSearchParams as Record<string, string | string[]>)) {
+      const previewParam = rawSearchParams["builder.preview"];
+      const previewModel =
+        (Array.isArray(previewParam) ? previewParam[0] : previewParam) || "page";
+
+      return (
+        <main className="flex-1">
+          <RenderBuilderContent content={null} model={previewModel} locale={locale} />
+        </main>
+      );
+    }
+
     notFound();
   }
 
