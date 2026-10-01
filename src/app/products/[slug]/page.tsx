@@ -10,6 +10,7 @@ import { RenderBuilderContent } from "@/components/RenderBuilderContent";
 import { BUILDER_API_KEY } from "@/lib/builder-config";
 import { firstBadge, type ProductBadges } from "@/lib/product-badges";
 import { resolveLocalizedValue } from "@/lib/builder-refs";
+import { ProductPurchasePanel } from "@/components/ProductPurchasePanel";
 
 export const revalidate = 60;
 
@@ -211,46 +212,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <p className="text-base text-slate">{shortDescription}</p>
             )}
 
-            {data.colors && data.colors.length > 0 && (
-              <div>
-                <p className="text-sm font-semibold text-ink">Color</p>
-                <div className="mt-2 flex flex-wrap gap-3">
-                  {data.colors.map((color, index) => (
-                    <div
-                      key={`${color.name}-${index}`}
-                      className="flex items-center gap-2 rounded-full border border-sand bg-surface px-3 py-1.5"
-                    >
-                      {color.hex && (
-                        <span
-                          className="h-4 w-4 rounded-full border border-sand"
-                          style={{ backgroundColor: color.hex }}
-                        />
-                      )}
-                      <span className="text-sm text-ink">{color.name}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {data.sizes && data.sizes.length > 0 && (
-              <div>
-                <p className="text-sm font-semibold text-ink">Size</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {data.sizes.map(
-                    (sizeItem, index) =>
-                      sizeItem.size && (
-                        <span
-                          key={`${sizeItem.size}-${index}`}
-                          className="rounded-md border border-sand px-3 py-1.5 text-sm text-ink"
-                        >
-                          {sizeItem.size}
-                        </span>
-                      ),
-                  )}
-                </div>
-              </div>
-            )}
+            <ProductPurchasePanel
+              colors={data.colors ?? []}
+              sizes={data.sizes ?? []}
+              inStock={inStock}
+            />
 
             {safeDescription && (
               <div

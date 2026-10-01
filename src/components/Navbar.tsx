@@ -71,6 +71,21 @@ const NAV_LINKS = [
   { href: "/card", label: "Card" },
 ];
 
+// Mirrors the `product.category` enum in `src/app/products/[slug]/page.tsx`
+// (`ProductCategory`), plus one curated, non-category filter ("New
+// Arrivals") -- same split `Footer.tsx`'s "Shop" column already uses.
+// Kept here as a single source so the navbar dropdown, the mobile
+// accordion, and the footer don't drift out of sync as categories change.
+const SHOP_CATEGORIES = [
+  { href: "/shop/jackets", label: "Jackets & Shells" },
+  { href: "/shop/packs", label: "Packs & Bags" },
+  { href: "/shop/footwear", label: "Footwear" },
+  { href: "/shop/layers", label: "Layering" },
+  { href: "/shop/accessories", label: "Accessories" },
+  { href: "/shop/camp-travel", label: "Camp & Travel" },
+  { href: "/shop/new", label: "New Arrivals" },
+];
+
 const CART_ITEM_COUNT = 2;
 
 function MarkIcon() {
@@ -181,6 +196,25 @@ function MenuIcon({ open }: { open: boolean }) {
   );
 }
 
+function ChevronIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="14"
+      height="14"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className="transition-transform duration-150 group-hover:rotate-180 group-focus-within:rotate-180"
+    >
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}
+
 // Demo-only: switches the `?locale=` query param so a live sales demo can
 // change locale without hand-editing the URL. Isolated in its own
 // `Suspense` boundary (below) since `useSearchParams` requires one.
@@ -221,6 +255,7 @@ function LocaleSwitcher() {
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [shopMobileOpen, setShopMobileOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -250,6 +285,35 @@ export function Navbar() {
         </Link>
 
         <nav className="hidden md:flex md:items-center md:gap-8">
+          <div className="group relative">
+            <Link
+              href="/shop"
+              className="flex items-center gap-1 text-sm font-medium tracking-wide text-sand/90 transition hover:text-accent"
+            >
+              Shop
+              <ChevronIcon />
+            </Link>
+            {/* Hover-and-focus dropdown, CSS-only -- no JS state needed on
+                desktop since a plain `group-hover`/`group-focus-within`
+                panel covers both mouse and keyboard without a click
+                handler that would also have to manage outside-click
+                dismissal. The invisible `pt-3` spacer keeps the panel
+                reachable by mouse across the gap instead of closing the
+                moment the cursor leaves the link. */}
+            <div className="invisible absolute left-0 top-full z-50 pt-3 opacity-0 transition duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+              <div className="min-w-56 rounded-lg border border-surface/10 bg-primary py-2 shadow-xl shadow-black/30">
+                {SHOP_CATEGORIES.map((category) => (
+                  <Link
+                    key={category.href}
+                    href={category.href}
+                    className="block px-4 py-2 text-sm text-sand/90 transition hover:bg-surface/10 hover:text-accent"
+                  >
+                    {category.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
@@ -306,6 +370,44 @@ export function Navbar() {
       {mobileOpen && (
         <nav className="border-t border-surface/10 bg-primary md:hidden">
           <div className="mx-auto flex max-w-6xl flex-col px-6 py-3">
+            <div className="border-b border-surface/10 pb-1">
+              <div className="flex items-center justify-between">
+                <Link
+                  href="/shop"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex-1 py-2.5 text-sm font-medium tracking-wide text-sand/90 transition hover:text-accent"
+                >
+                  Shop
+                </Link>
+                <button
+                  type="button"
+                  aria-label={shopMobileOpen ? "Collapse shop categories" : "Expand shop categories"}
+                  aria-expanded={shopMobileOpen}
+                  onClick={() => setShopMobileOpen((open) => !open)}
+                  className="p-2.5 text-sand/90 transition hover:text-accent"
+                >
+                  <span
+                    className={`block transition-transform duration-150 ${shopMobileOpen ? "rotate-180" : ""}`}
+                  >
+                    <ChevronIcon />
+                  </span>
+                </button>
+              </div>
+              {shopMobileOpen && (
+                <div className="flex flex-col pb-2 pl-3">
+                  {SHOP_CATEGORIES.map((category) => (
+                    <Link
+                      key={category.href}
+                      href={category.href}
+                      onClick={() => setMobileOpen(false)}
+                      className="py-2 text-sm text-sand/80 transition hover:text-accent"
+                    >
+                      {category.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
