@@ -40,6 +40,21 @@ import { firstBadge, type ProductBadges } from "@/lib/product-badges";
  * (a campaign page, a one-off editorial page). Picking which end of that
  * spectrum a given surface belongs on is a per-surface decision, not a
  * platform limitation either way.
+ *
+ * FALLBACK TO BUILDER FOR UNRECOGNIZED SLUGS
+ *
+ * A hardcoded category list and a fully flexible content canvas aren't
+ * mutually exclusive — they're two tiers of the same route. The seven known
+ * category slugs stay a fast, code-owned path with no Builder round trip for
+ * the page shell itself. Any OTHER slug under /shop/* (a seasonal sale page,
+ * a one-off promo landing page — "fall-trail-sale", say) falls through to
+ * the exact same `landing-page` → `page` lookup the catch-all route uses.
+ * Without this fallback, every /shop/* URL that isn't one of the seven
+ * hardcoded categories would hard-404 even if a content editor built and
+ * published a real Builder page at that path — silently orphaning it. This
+ * keeps the category browsing experience code-owned while still letting
+ * marketing ship an ad-hoc /shop/<slug> landing page without a developer
+ * needing to add it to SHOP_CATEGORIES first.
  */
 export const revalidate = 60;
 
@@ -71,8 +86,42 @@ function formatPrice(price: number, currency: string) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(price);
 }
 
+// Fetches a Builder landing-page/page entry at /shop/<slug>, mirroring
+// src/app/[...slug]/page.tsx's resolution order (landing-page first, since
+// a time-boxed campaign page is meant to be able to override a generic page
+// at the same path). Shared by the page component and generateMetadata so
+// an ad-hoc /shop/<slug> page gets a real <title> too, not just a fallback.
+async function fetchShopFallbackPage(slug: string) {
+  const urlPath = `/shop/${slug}`;
+
+  const landingPage = await fetchOneEntry({
+    fetch: builderFetch,
+    apiKey: BUILDER_API_KEY,
+    model: "landing-page",
+    userAttributes: { urlPath },
+    enrich: true,
+  }).catch(() => null);
+
+  const content =
+    landingPage ??
+    (await fetchOneEntry({
+      fetch: builderFetch,
+      apiKey: BUILDER_API_KEY,
+      model: "page",
+      userAttributes: { urlPath },
+      enrich: true,
+    }).catch(() => null));
+
+  if (!content) return null;
+
+  return { content, model: landingPage ? "landing-page" : "page" } as const;
+}
+
 // Every known category/slug combination is known at build time — no reason
 // to make Next.js discover these via the catch-all or guess at runtime.
+// Unrecognized slugs are still handled (see fetchShopFallbackPage above),
+// just not statically pre-rendered — dynamicParams defaults to true, so
+// Next.js renders those on demand.
 export function generateStaticParams() {
   return SHOP_CATEGORIES.map((category) => ({ category: category.slug }));
 }
@@ -83,13 +132,20 @@ export async function generateMetadata({
   const { category: slug } = await params;
   const category = getShopCategory(slug);
 
-  if (!category) {
-    return { title: "Shop — Fieldnote" };
+  if (category) {
+    return {
+      title: `${category.label} — Fieldnote`,
+      description: category.blurb,
+    };
   }
 
+  const fallback = await fetchShopFallbackPage(slug);
+  const title = fallback?.content?.data?.title as string | undefined;
+  const description = fallback?.content?.data?.description as string | undefined;
+
   return {
-    title: `${category.label} — Fieldnote`,
-    description: category.blurb,
+    title: title ? `${title} — Fieldnote` : "Shop — Fieldnote",
+    description,
   };
 }
 
@@ -100,8 +156,21 @@ export default async function ShopCategoryPage({
   const { category: slug } = await params;
   const category = getShopCategory(slug);
 
+  // Unrecognized slug: this isn't one of the seven hardcoded categories, so
+  // try a Builder landing-page/page entry at this path before giving up.
+  // See the FALLBACK TO BUILDER FOR UNRECOGNIZED SLUGS note above.
   if (!category) {
-    notFound();
+    const fallback = await fetchShopFallbackPage(slug);
+
+    if (!fallback) {
+      notFound();
+    }
+
+    return (
+      <main className="flex-1">
+        <RenderBuilderContent content={fallback.content} model={fallback.model} />
+      </main>
+    );
   }
 
   const sort = normalizeSort((await searchParams).sort);
