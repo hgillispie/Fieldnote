@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
+import { EditorEmptyState } from "./EditorEmptyState";
 import { SECTION_HEADING_CLASSES, SectionShell } from "./SectionShell";
 
 type FeatureCardsColumns = "2" | "3" | "4";
@@ -70,44 +71,17 @@ const ICONS: Record<FeatureCardIcon, ReactElement> = {
   ),
 };
 
-// Real, non-lorem Fieldnote copy so the block never looks empty — used
-// whenever the `cards` list input is unset or empty.
-const FALLBACK_CARDS: FeatureCard[] = [
-  {
-    icon: "shield",
-    title: "Lifetime repair guarantee",
-    description:
-      "Every Fieldnote piece is backed by free repairs for as long as you own it — rips, zippers, seams, all of it.",
-  },
-  {
-    icon: "truck",
-    title: "Free shipping over $75",
-    description:
-      "Standard shipping is free on orders over $75, with expedited options at checkout for trip-week orders.",
-  },
-  {
-    icon: "mountain",
-    title: "Field-tested, not lab-tested",
-    description:
-      "Every product spends a season with our guides on real trails before it ships to you.",
-  },
-  {
-    icon: "leaf",
-    title: "Recycled and repairable materials",
-    description:
-      "Recycled shells, responsibly sourced down, and parts designed to be replaced instead of thrown out.",
-    linkLabel: "Our materials",
-    linkHref: "/sustainability",
-  },
-];
-
 export function FeatureCards({
-  heading = "Why gear up with Fieldnote",
+  heading,
   columns = "3",
   cards,
   attributes,
 }: FeatureCardsProps) {
-  const items = cards && cards.length > 0 ? cards : FALLBACK_CARDS;
+  const items = (cards ?? []).filter((card) => card?.title);
+
+  if (items.length === 0) {
+    return <EditorEmptyState attributes={attributes} message="Add cards in the options panel." />;
+  }
 
   return (
     <SectionShell attributes={attributes} spacing="md">

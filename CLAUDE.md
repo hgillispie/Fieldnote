@@ -216,6 +216,34 @@ GitHub App issue again — they produce different error text (compare "Permissio
 - `npm run typecheck` and `npm run test` must exist and pass — Builder Code runs them as its Validation command after every agent task.
 - When creating/modifying models over the CMS MCP: target a lower environment, never `main` — see open question #1 above.
 
+## Coherence pass (2026-10-02)
+
+- **No render-time copy fallbacks.** Hero, LeadForm, ProductGrid, FeatureCards,
+  Testimonials, Accordion, RichText, IconCard and ProductCard no longer invent
+  copy when a field is blank (Hero used to add "Shop the collection" → /shop to
+  every legal page). Registry `defaultValue`s only apply at insert time (Gen 2
+  SDK never reads them when rendering), so they stay for drag-in polish, except the
+  Hero CTA, which has no default at all. Empty list components render nothing live
+  and an `EditorEmptyState` hint in the Visual Editor.
+- **In-page anchors:** use block-level `properties.id` (spread into
+  `attributes`), not a component option. LeadForm field ids derive from
+  `builder-id` because `useId` mismatches across `<Content>`'s A/B SSR/CSR trees.
+- **New page-type blocks:** `CategoryTiles`, `MediaText`, `StatBand`,
+  `PullQuote`, `StoreList`, `PolicyDocument`, Hero `minimal` variant;
+  SearchBox `scope: "help"`.
+- **Content changes applied 2026-10-02 (25 entries):** `scripts/content/coherence-pass.mjs`
+  (dry run by default; `BUILDER_PRIVATE_KEY=bpk-... node scripts/content/coherence-pass.mjs --apply`,
+  idempotent). It rebuilds /shop (curated picks), homepage, legal, editorial,
+  help, stores, cart/account, LeadForm labels on campaign pages, A/B variations
+  on homepage/help/stores/pro, and mismatched article images. Backups go to
+  `.content-backups/` (gitignored).
+- **Write API gotcha:** PATCH returns 200 but silently ignores `variations`.
+  Variation edits need a PUT of the full stored entry (the PATCH response body)
+  with only the variation `data` swapped; the script does this.
+- **Scheduling gotcha:** the `/card/intro-apr` and `/pro/trade-pricing`
+  landing pages are date-scheduled; outside their windows `/card/intro-apr`
+  falls through to the evergreen `page` entry, and `/pro/trade-pricing` 404s.
+
 ## Phase status
 
 **Phase 0, Phase 1, Phase 2, and Phase 3a are done.

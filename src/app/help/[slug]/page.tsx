@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   fetchHelpArticle,
@@ -83,9 +84,12 @@ export default async function HelpArticlePage({
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-16">
-      <p className="text-xs font-medium uppercase tracking-wide text-accent">
-        Served from: builder
-      </p>
+      <Link
+        href="/help"
+        className="text-xs font-medium uppercase tracking-wide text-accent underline-offset-4 hover:underline"
+      >
+        Help Center
+      </Link>
       <h1 className="mt-2 font-display text-3xl text-ink">{data.title}</h1>
       <p className="mt-1 text-sm text-slate">
         {author?.name}

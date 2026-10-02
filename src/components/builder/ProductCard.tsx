@@ -2,6 +2,7 @@
 
 import { resolveReference, type BuilderReference } from "@/lib/builder-refs";
 import { firstBadge, type ProductBadges } from "@/lib/product-badges";
+import { EditorEmptyState } from "./EditorEmptyState";
 
 type ProductCardSource = "product" | "static";
 
@@ -37,13 +38,13 @@ function formatPrice(price: number, currency: string) {
 export function ProductCard({
   source = "static",
   product,
-  staticName = "Cascade 3L Shell",
-  staticPrice = 389,
+  staticName,
+  staticPrice,
   staticCurrency = "USD",
   staticImage,
-  staticImageAlt = "Cascade 3L Shell rain jacket in forest green",
-  staticHref = "/products/cascade-3l-shell",
-  staticBadge = "Best Seller",
+  staticImageAlt,
+  staticHref,
+  staticBadge,
   attributes,
 }: ProductCardProps) {
   // "product" pulls live data from a referenced `product` entry; "static"
@@ -54,10 +55,16 @@ export function ProductCard({
   const name = resolved?.name ?? staticName;
   const price = resolved?.price ?? staticPrice;
   const currency = resolved?.currency ?? staticCurrency;
-  const href = resolved?.slug ? `/products/${resolved.slug}` : staticHref;
+  const href = resolved?.slug ? `/products/${resolved.slug}` : staticHref || "/shop";
   const image = resolved?.images?.[0]?.image ?? staticImage;
   const badge = firstBadge(resolved?.badges) ?? staticBadge;
-  const imageAlt = resolved?.name ?? staticImageAlt;
+  const imageAlt = resolved?.name ?? staticImageAlt ?? name ?? "";
+
+  // The static fields are the editor's own fallback (pre-filled on insert by
+  // the registry); with neither a resolved product nor those, render nothing.
+  if (!name || typeof price !== "number") {
+    return <EditorEmptyState attributes={attributes} message="Pick a product or fill in the static fields." />;
+  }
 
   return (
     <a

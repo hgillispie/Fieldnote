@@ -12,10 +12,10 @@
 //
 // This is deliberately NOT wired to a real cart: there's no cart model, no
 // persisted line-item state, no checkout. Clicking "Add to cart" updates
-// this component's own local state for visual feedback only, exactly like
-// the navbar's hardcoded `CART_ITEM_COUNT` badge -- a demo PDP needs to
+// this component's own local state for visual feedback only -- a demo PDP needs to
 // *look* like a real storefront's purchase flow (variant picker, qty
 // stepper, confirmation state), not actually run one.
+import Link from "next/link";
 import { useState } from "react";
 
 interface ProductColor {
@@ -111,12 +111,12 @@ export function ProductPurchasePanel({
             <p className="text-sm font-semibold text-ink">
               Size{selectedSize ? ` — ${selectedSize}` : ""}
             </p>
-            <button
-              type="button"
+            <Link
+              href="/help/how-do-i-find-my-size"
               className="text-xs font-medium text-slate underline-offset-2 hover:text-ink hover:underline"
             >
               Size guide
-            </button>
+            </Link>
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
             {sizeOptions.map((size, index) => {

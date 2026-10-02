@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { EditorEmptyState } from "./EditorEmptyState";
 import { SECTION_HEADING_CLASSES, SectionShell } from "./SectionShell";
 
 type TestimonialsLayout = "grid" | "carousel";
@@ -21,42 +22,13 @@ interface TestimonialsProps {
 
 const AUTOPLAY_INTERVAL_MS = 6000;
 
-// Real, non-lorem customer voice so the block never looks empty — used
-// whenever the `testimonials` list input is unset or empty.
-const FALLBACK_TESTIMONIALS: Testimonial[] = [
-  {
-    quote:
-      "I've put the Cascade shell through three wet-season backpacking trips now and it still beads water like day one. First rain jacket I haven't had to re-treat every month.",
-    authorName: "Priya Nandan",
-    authorRole: "Backpacker, Portland OR",
-  },
-  {
-    quote:
-      "Ordered the Longhaul pack for a six-country trip and it fit in every overhead bin I threw at it, including the tiny regional ones in Southeast Asia.",
-    authorName: "Diego Fuentes",
-    authorRole: "Travel blogger",
-  },
-  {
-    quote:
-      "We outfit twelve guides a season and Fieldnote's the first brand where the repair guarantee actually held up when we used it. That's rare in this industry.",
-    authorName: "Casey Whitfield",
-    authorRole: "Owner, Ridge & River Guiding Co.",
-  },
-  {
-    quote:
-      "The Traverse boots needed zero break-in time, which after twenty years of hiking boots giving me blisters on day one, felt like a genuine miracle.",
-    authorName: "Marcus Ale",
-    authorRole: "Thru-hiker",
-  },
-];
-
 export function Testimonials({
-  heading = "What our customers say",
+  heading,
   layout = "grid",
   testimonials,
   attributes,
 }: TestimonialsProps) {
-  const items = testimonials && testimonials.length > 0 ? testimonials : FALLBACK_TESTIMONIALS;
+  const items = (testimonials ?? []).filter((item) => item?.quote && item.authorName);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const currentIndex = activeIndex % items.length;
@@ -75,6 +47,10 @@ export function Testimonials({
 
   function goToNext() {
     setActiveIndex((current) => (current + 1) % items.length);
+  }
+
+  if (items.length === 0) {
+    return <EditorEmptyState attributes={attributes} message="Add testimonials in the options panel." />;
   }
 
   return (

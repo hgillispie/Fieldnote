@@ -30,8 +30,8 @@ export const SECTION_SPACING_CLASSES: Record<SectionSpacing, string> = {
 export const SECTION_GUTTER_CLASSES = "px-4 sm:px-6 lg:px-8";
 
 /** Shared heading treatment so every section's title sits on the same rhythm. */
-export const SECTION_HEADING_CLASSES =
-  "mb-8 font-display text-2xl text-ink md:mb-10 md:text-3xl";
+export const SECTION_TITLE_CLASSES = "font-display text-2xl text-ink md:text-3xl";
+export const SECTION_HEADING_CLASSES = `mb-8 md:mb-10 ${SECTION_TITLE_CLASSES}`;
 
 const InsideSectionContext = createContext(false);
 

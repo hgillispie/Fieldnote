@@ -56,8 +56,8 @@ const ICONS: Record<IconCardIcon, ReactElement> = {
 
 export function IconCard({
   icon = "compass",
-  title = "Built for the trail",
-  description = "A short description of this feature or benefit, ready to repeat inside a Columns or Box layout.",
+  title,
+  description,
   attributes,
 }: IconCardProps) {
   return (
@@ -66,8 +66,8 @@ export function IconCard({
       className="flex flex-col gap-3 rounded-lg border border-sand bg-surface p-6 md:p-8"
     >
       <div className="h-10 w-10 text-accent">{ICONS[icon]}</div>
-      <h3 className="font-display text-base text-ink">{title}</h3>
-      <p className="text-sm text-slate">{description}</p>
+      {title && <h3 className="font-display text-base text-ink">{title}</h3>}
+      {description && <p className="text-sm text-slate">{description}</p>}
     </div>
   );
 }
