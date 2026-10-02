@@ -37,13 +37,15 @@
 import { useEffect, useState } from "react";
 import { resolveReference, type BuilderReference } from "@/lib/builder-refs";
 import { firstBadge, type ProductBadges } from "@/lib/product-badges";
-import { SECTION_HEADING_CLASSES, SectionShell } from "./SectionShell";
+import { SectionHeader } from "./SectionHeader";
+import { SectionShell } from "./SectionShell";
 
 type ProductGridSource = "builder" | "shopify" | "api";
 type ProductGridColumns = "2" | "3" | "4";
 
 interface GridProduct {
   name: string;
+  category?: string;
   price: number;
   currency: string;
   image?: string;
@@ -54,6 +56,7 @@ interface GridProduct {
 
 interface ProductData {
   name?: string;
+  category?: string;
   price?: number;
   currency?: string;
   slug?: string;
@@ -69,6 +72,9 @@ interface ProductGridProps {
   source?: ProductGridSource;
   columns?: ProductGridColumns;
   heading?: string;
+  subheading?: string;
+  linkLabel?: string;
+  linkHref?: string;
   products?: BuilderListItem[];
   apiUrl?: string;
   attributes?: Record<string, unknown>;
@@ -91,36 +97,51 @@ const COLUMN_CLASSES: Record<ProductGridColumns, string> = {
 // rendered nothing because a single upstream had a bad day — defense in
 // depth on a page's most-visible, highest-traffic component is a deliberate
 // choice, not overengineering.
+// Mirrors four real, published catalog entries (slug, price, image) so even
+// the last-resort render links to working PDPs at the right prices.
 const FALLBACK_PRODUCTS: GridProduct[] = [
   {
     name: "Cascade 3L Shell",
+    category: "Outerwear",
     price: 389,
     currency: "USD",
-    imageAlt: "Cascade 3L Shell rain jacket in forest green",
+    image:
+      "https://cdn.builder.io/api/v1/image/assets%2F3a593c5220b04d469e25606e2987ebc0%2Fc3315582135048928ae156b3ee7b8b59",
+    imageAlt: "Cascade 3L Shell",
     href: "/products/cascade-3l-shell",
     badge: "Best Seller",
   },
   {
     name: "Traverse Mid GTX",
-    price: 219,
+    category: "Footwear",
+    price: 249,
     currency: "USD",
-    imageAlt: "Traverse Mid GTX hiking boots",
+    image:
+      "https://cdn.builder.io/api/v1/image/assets%2F3a593c5220b04d469e25606e2987ebc0%2Ff7ef4d9d4ef742e8bba2ef08b0468d41",
+    imageAlt: "Traverse Mid GTX",
     href: "/products/traverse-mid-gtx",
+    badge: "Best Seller",
   },
   {
     name: "Longhaul 45L Pack",
-    price: 259,
+    category: "Packs & Bags",
+    price: 279,
     currency: "USD",
-    imageAlt: "Longhaul 45L travel backpack",
+    image:
+      "https://cdn.builder.io/api/v1/image/assets%2F3a593c5220b04d469e25606e2987ebc0%2F82e54002ba2b4ebab1af0f449a05d87c",
+    imageAlt: "Longhaul 45L Pack",
     href: "/products/longhaul-45l-pack",
-    badge: "New",
+    badge: "Best Seller",
   },
   {
-    name: "Basin Merino Tee",
-    price: 68,
+    name: "Merino 190 Crew",
+    category: "Layers",
+    price: 95,
     currency: "USD",
-    imageAlt: "Basin Merino wool t-shirt",
-    href: "/products/basin-merino-tee",
+    image:
+      "https://cdn.builder.io/api/v1/image/assets%2F3a593c5220b04d469e25606e2987ebc0%2F89fdd85a65664482ad714d2df06f0a01",
+    imageAlt: "Merino 190 Crew",
+    href: "/products/merino-190-crew",
   },
 ];
 
@@ -140,6 +161,7 @@ function toGridProducts(items: BuilderListItem[]): GridProduct[] {
     )
     .map((data) => ({
       name: data.name as string,
+      category: data.category,
       price: data.price as number,
       currency: data.currency ?? "USD",
       image: data.images?.[0]?.image,
@@ -160,6 +182,7 @@ function fromApiResponse(data: unknown): GridProduct[] {
     )
     .map((item) => ({
       name: item.name,
+      category: typeof item.category === "string" ? item.category : undefined,
       price: item.price,
       currency: typeof item.currency === "string" ? item.currency : "USD",
       image: typeof item.image === "string" ? item.image : undefined,
@@ -172,7 +195,10 @@ function fromApiResponse(data: unknown): GridProduct[] {
 export function ProductGrid({
   source = "builder",
   columns = "3",
-  heading = "Shop the collection",
+  heading,
+  subheading,
+  linkLabel,
+  linkHref,
   products,
   apiUrl,
   attributes,
@@ -219,7 +245,12 @@ export function ProductGrid({
 
   return (
     <SectionShell attributes={attributes} spacing="md">
-      {heading && <h2 className={SECTION_HEADING_CLASSES}>{heading}</h2>}
+      <SectionHeader
+        heading={heading}
+        subheading={subheading}
+        linkLabel={linkLabel}
+        linkHref={linkHref}
+      />
       <div className={`grid gap-6 lg:gap-8 ${COLUMN_CLASSES[columns]}`}>
         {items.map((item) => (
           <a
@@ -246,6 +277,9 @@ export function ProductGrid({
               )}
             </div>
             <div className="flex flex-col gap-1.5 p-5">
+              {item.category && (
+                <p className="text-xs uppercase tracking-wide text-slate">{item.category}</p>
+              )}
               <h3 className="font-display text-base text-ink">{item.name}</h3>
               <p className="text-sm text-slate">
                 {formatPrice(item.price, item.currency)}

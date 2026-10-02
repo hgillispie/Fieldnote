@@ -80,12 +80,42 @@ describe("ProductGrid", () => {
     expect(html).toContain(PARKA_IMAGE);
     expect(html).toContain("/products/ridgeline-down-parka");
     expect(html).toContain(">Limited<");
-    expect(html).not.toContain("Basin Merino Tee");
+    expect(html).not.toContain("Merino 190 Crew");
   });
 
   it("falls back when a reference arrives unresolved, e.g. a draft entry", () => {
     const html = renderToStaticMarkup(<ProductGrid source="builder" products={unresolved} />);
-    expect(html).toContain("Basin Merino Tee");
+    expect(html).toContain("Merino 190 Crew");
+  });
+
+  it("only links fallback products to real catalog slugs", () => {
+    const html = renderToStaticMarkup(<ProductGrid source="builder" products={[]} />);
+    const hrefs = [...html.matchAll(/<a [^>]*href="([^"]+)"/g)].map((m) => m[1]);
+    expect(hrefs).toEqual([
+      "/products/cascade-3l-shell",
+      "/products/traverse-mid-gtx",
+      "/products/longhaul-45l-pack",
+      "/products/merino-190-crew",
+    ]);
+  });
+
+  it("renders no heading when the entry leaves it blank", () => {
+    const html = renderToStaticMarkup(<ProductGrid source="builder" products={liveParka} />);
+    expect(html).not.toContain("<h2");
+    expect(html).not.toContain("Shop the collection");
+  });
+
+  it("renders the header link only when both label and URL are set", () => {
+    const withLink = renderToStaticMarkup(
+      <ProductGrid heading="Editor’s picks" linkLabel="Shop new arrivals" linkHref="/shop/new" products={liveParka} />,
+    );
+    expect(withLink).toContain("Shop new arrivals");
+    expect(withLink).toContain('href="/shop/new"');
+
+    const labelOnly = renderToStaticMarkup(
+      <ProductGrid heading="Editor’s picks" linkLabel="Shop new arrivals" products={liveParka} />,
+    );
+    expect(labelOnly).not.toContain("Shop new arrivals");
   });
 
   it("still falls back when no products are configured", () => {

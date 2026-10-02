@@ -13,6 +13,8 @@ interface LeadFormProps {
   heading?: string;
   subheading?: string;
   ctaLabel?: string;
+  messagePlaceholder?: string;
+  successMessage?: string;
   endpoint?: string;
   attributes?: Record<string, unknown>;
 }
@@ -60,13 +62,23 @@ function validate(values: LeadFormValues) {
   return errors;
 }
 
+const INPUT_CLASSES =
+  "w-full rounded-md border border-sand bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-primary";
+
+// Render-time fallbacks stay neutral: this form appears on Pro, Card and
+// campaign pages, so a blank field must not borrow one surface's copy.
 export function LeadForm({
-  heading = "Talk to our Pro team",
-  subheading = "Tell us about your outfitter, guide service, or fleet and we'll follow up with trade pricing and bulk ordering options.",
-  ctaLabel = "Request trade pricing",
+  heading,
+  subheading,
+  ctaLabel,
+  messagePlaceholder,
+  successMessage,
   endpoint,
   attributes,
 }: LeadFormProps) {
+  // builder-id is stable across server and client renders; useId is not,
+  // because <Content> renders a different tree on each side for A/B tests.
+  const fieldId = `lead-${String(attributes?.["builder-id"] ?? "form")}`;
   const [values, setValues] = useState<LeadFormValues>({ name: "", email: "", message: "" });
   const [errors, setErrors] = useState<Partial<Record<keyof LeadFormValues, string>>>({});
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
@@ -92,72 +104,77 @@ export function LeadForm({
 
   if (status === "success") {
     return (
-      <div {...attributes} className="rounded-lg border border-sand bg-surface-alt p-6">
-        <h2 className="font-display text-xl text-ink">Thanks, {values.name.split(" ")[0]}.</h2>
+      <div {...attributes} className="rounded-lg border border-sand bg-surface-alt p-6 md:p-8">
+        <h2 className="font-display text-xl text-ink">
+          Thanks, {values.name.trim().split(" ")[0]}.
+        </h2>
         <p className="mt-2 text-sm text-slate">
-          A Fieldnote Pro rep will reach out to {values.email} within one business day.
+          {successMessage?.trim() ||
+            `We've got your details and will follow up at ${values.email.trim()} within one business day.`}
         </p>
       </div>
     );
   }
 
   return (
-    <div {...attributes} className="rounded-lg border border-sand bg-surface p-6">
+    <div {...attributes} className="rounded-lg border border-sand bg-surface p-6 md:p-8">
       {heading && <h2 className="font-display text-xl text-ink">{heading}</h2>}
       {subheading && <p className="mt-2 text-sm text-slate">{subheading}</p>}
 
       <form onSubmit={handleSubmit} noValidate className="mt-6 flex flex-col gap-4">
         <div>
-          <label htmlFor="lead-name" className="mb-1 block text-sm font-medium text-ink">
+          <label htmlFor={`${fieldId}-name`} className="mb-1 block text-sm font-medium text-ink">
             Name
           </label>
           <input
-            id="lead-name"
+            id={`${fieldId}-name`}
             type="text"
+            autoComplete="name"
             value={values.name}
             onChange={(e) => setValues((v) => ({ ...v, name: e.target.value }))}
-            className="w-full rounded-md border border-sand bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-primary"
+            className={INPUT_CLASSES}
             aria-invalid={!!errors.name}
-            aria-describedby={errors.name ? "lead-name-error" : undefined}
+            aria-describedby={errors.name ? `${fieldId}-name-error` : undefined}
           />
           {errors.name && (
-            <p id="lead-name-error" className="mt-1 text-xs text-danger">
+            <p id={`${fieldId}-name-error`} className="mt-1 text-xs text-danger">
               {errors.name}
             </p>
           )}
         </div>
 
         <div>
-          <label htmlFor="lead-email" className="mb-1 block text-sm font-medium text-ink">
+          <label htmlFor={`${fieldId}-email`} className="mb-1 block text-sm font-medium text-ink">
             Email
           </label>
           <input
-            id="lead-email"
+            id={`${fieldId}-email`}
             type="email"
+            autoComplete="email"
             value={values.email}
             onChange={(e) => setValues((v) => ({ ...v, email: e.target.value }))}
-            className="w-full rounded-md border border-sand bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-primary"
+            className={INPUT_CLASSES}
             aria-invalid={!!errors.email}
-            aria-describedby={errors.email ? "lead-email-error" : undefined}
+            aria-describedby={errors.email ? `${fieldId}-email-error` : undefined}
           />
           {errors.email && (
-            <p id="lead-email-error" className="mt-1 text-xs text-danger">
+            <p id={`${fieldId}-email-error`} className="mt-1 text-xs text-danger">
               {errors.email}
             </p>
           )}
         </div>
 
         <div>
-          <label htmlFor="lead-message" className="mb-1 block text-sm font-medium text-ink">
+          <label htmlFor={`${fieldId}-message`} className="mb-1 block text-sm font-medium text-ink">
             Message <span className="text-slate">(optional)</span>
           </label>
           <textarea
-            id="lead-message"
+            id={`${fieldId}-message`}
             rows={3}
             value={values.message}
             onChange={(e) => setValues((v) => ({ ...v, message: e.target.value }))}
-            placeholder="Tell us about your team size and what you're outfitting for."
-            className="w-full rounded-md border border-sand bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-primary"
+            placeholder={messagePlaceholder}
+            className={INPUT_CLASSES}
           />
         </div>
 
@@ -170,9 +187,9 @@ export function LeadForm({
         <button
           type="submit"
           disabled={status === "submitting"}
-          className="mt-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-surface disabled:opacity-60"
+          className="mt-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-surface transition hover:opacity-90 disabled:opacity-60"
         >
-          {status === "submitting" ? "Sending..." : ctaLabel}
+          {status === "submitting" ? "Sending..." : ctaLabel?.trim() || "Submit"}
         </button>
       </form>
     </div>

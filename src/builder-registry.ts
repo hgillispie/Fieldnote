@@ -123,6 +123,12 @@
  * Hero, Split Hero). "Cards" groups the atomic Icon Card alongside
  * ProductCard. "Layout" groups Container.
  * Everything else keeps its existing "Fieldnote" group.
+ *
+ * PAGE-TYPE BUILDING BLOCKS
+ * Different page purposes get different vocabulary, not the same skeleton
+ * with swapped text: PolicyDocument (+ Hero "minimal") for legal pages;
+ * MediaText, StatBand and PullQuote for editorial pages; CategoryTiles and a
+ * curated ProductGrid for merchandising; StoreList for the store finder.
  */
 import { register } from "@builder.io/sdk-react";
 import type { RegisteredComponent } from "@builder.io/sdk-react";
@@ -140,6 +146,28 @@ import { Disclosure } from "@/components/builder/Disclosure";
 import { LeadForm } from "@/components/builder/LeadForm";
 import { ArticleList } from "@/components/builder/ArticleList";
 import { Testimonials } from "@/components/builder/Testimonials";
+import { CategoryTiles } from "@/components/builder/CategoryTiles";
+import { MediaText } from "@/components/builder/MediaText";
+import { StatBand } from "@/components/builder/StatBand";
+import { PullQuote } from "@/components/builder/PullQuote";
+import { StoreList } from "@/components/builder/StoreList";
+import { PolicyDocument } from "@/components/builder/PolicyDocument";
+
+// No defaultValue on either CTA field: the button renders only when an
+// editor sets both, so a legal or informational page never picks up a
+// commerce CTA it didn't ask for.
+const HERO_CTA_INPUTS: NonNullable<RegisteredComponent["inputs"]> = [
+  {
+    name: "ctaLabel",
+    type: "text",
+    helperText: "Optional. The button only renders when both a label and a link are set.",
+  },
+  {
+    name: "ctaHref",
+    type: "url",
+    helperText: "Optional. Use a path (/shop/jackets) or an in-page anchor (#apply).",
+  },
+];
 
 function heroImageInputsBase(): NonNullable<RegisteredComponent["inputs"]> {
   return [
@@ -156,10 +184,12 @@ function heroImageInputsBase(): NonNullable<RegisteredComponent["inputs"]> {
       defaultValue:
         "Technical outerwear and travel gear built to survive the trip you're actually taking.",
     },
-    { name: "ctaLabel", type: "text", defaultValue: "Shop the collection" },
-    { name: "ctaHref", type: "url", defaultValue: "/shop" },
+    ...HERO_CTA_INPUTS,
   ];
 }
+
+const heroHasImage = (options: Map<string, unknown>) =>
+  options.get("variant") !== "text" && options.get("variant") !== "minimal";
 
 function heroImageFieldInputs(): NonNullable<RegisteredComponent["inputs"]> {
   return [
@@ -197,8 +227,10 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
       {
         name: "variant",
         type: "text",
-        enum: ["image", "split", "text"],
+        enum: ["image", "split", "text", "minimal"],
         defaultValue: "image",
+        helperText:
+          "minimal is a left-aligned, text-only header for legal and informational pages.",
       },
       { name: "eyebrow", type: "text", defaultValue: "New for Fall" },
       {
@@ -213,20 +245,19 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
         defaultValue:
           "Technical outerwear and travel gear built to survive the trip you're actually taking.",
       },
-      { name: "ctaLabel", type: "text", defaultValue: "Shop the collection" },
-      { name: "ctaHref", type: "url", defaultValue: "/shop" },
+      ...HERO_CTA_INPUTS,
       {
         name: "heroImage",
         type: "file",
         allowedFileTypes: ["jpeg", "jpg", "png", "webp", "svg"],
-        showIf: (options: Map<string, unknown>) => options.get("variant") !== "text",
+        showIf: heroHasImage,
       },
       {
         name: "heroImageAlt",
         type: "text",
         required: true,
         helperText: "Required - gated by the accessibility workflow rule on Hero images.",
-        showIf: (options: Map<string, unknown>) => options.get("variant") !== "text",
+        showIf: heroHasImage,
       },
       // ENTERPRISE PATTERN: DAM COEXISTENCE (Builder Asset Manager + Cloudinary)
       //
@@ -247,7 +278,7 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
         type: "cloudinaryImage",
         helperText:
           "Optional - pick an asset from the existing Cloudinary library instead of Builder's Asset Manager. Overrides the image above when set.",
-        showIf: (options: Map<string, unknown>) => options.get("variant") !== "text",
+        showIf: heroHasImage,
       },
     ],
   },
@@ -337,12 +368,12 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
         enum: ["compass", "mountain", "shield", "truck", "leaf", "tag"],
         defaultValue: "compass",
       },
-      { name: "title", type: "text", defaultValue: "Built for the trail" },
+      { name: "title", type: "text", defaultValue: "Lifetime repair guarantee" },
       {
         name: "description",
         type: "longText",
         defaultValue:
-          "A short description of this feature or benefit, ready to repeat inside a Columns or Box layout.",
+          "Rips, zippers, seams: we fix it free for as long as you own it.",
       },
     ],
   },
@@ -390,12 +421,13 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
         name: "staticImage",
         type: "file",
         allowedFileTypes: ["jpeg", "jpg", "png", "webp"],
+        defaultValue: "https://cdn.builder.io/api/v1/image/assets%2F3a593c5220b04d469e25606e2987ebc0%2Fc3315582135048928ae156b3ee7b8b59",
         showIf: (options: Map<string, unknown>) => options.get("source") === "static",
       },
       {
         name: "staticImageAlt",
         type: "text",
-        defaultValue: "Cascade 3L Shell rain jacket in forest green",
+        defaultValue: "Cascade 3L Shell",
         showIf: (options: Map<string, unknown>) => options.get("source") === "static",
       },
       {
@@ -438,9 +470,20 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
       {
         name: "heading",
         type: "text",
-        defaultValue: "Shop the collection",
-        helperText: "Heading shown above the grid.",
+        defaultValue: "Field-tested favorites",
+        helperText: "Heading shown above the grid. Leave blank for no heading.",
       },
+      {
+        name: "subheading",
+        type: "longText",
+        helperText: "Optional line under the heading.",
+      },
+      {
+        name: "linkLabel",
+        type: "text",
+        helperText: "Optional header link, e.g. \"Shop new arrivals\". Renders only with a link URL.",
+      },
+      { name: "linkHref", type: "url" },
       {
         name: "products",
         type: "list",
@@ -525,11 +568,11 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
             allowedFileTypes: ["jpeg", "jpg", "png", "webp", "svg"],
             helperText: "Optional - overrides the icon when set.",
           },
-          { name: "title", type: "text", defaultValue: "Feature title" },
+          { name: "title", type: "text", defaultValue: "Free 60-day returns" },
           {
             name: "description",
             type: "longText",
-            defaultValue: "A short description of this feature or benefit.",
+            defaultValue: "Unworn gear can be returned within 60 days for a full refund.",
           },
           { name: "linkLabel", type: "text" },
           { name: "linkHref", type: "url" },
@@ -603,11 +646,13 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
           },
         ],
         subFields: [
-          { name: "question", type: "text", defaultValue: "Your question here" },
+          { name: "question", type: "text", defaultValue: "Can I exchange for a different size?" },
           {
             name: "answer",
             type: "richText",
-            defaultValue: "<p>Rendered as sanitized HTML - all output is passed through DOMPurify.</p>",
+            defaultValue:
+              "<p>Yes. Exchanges are free within 60 days of delivery. Start one from your order confirmation email.</p>",
+            helperText: "Rendered as sanitized HTML - all output is passed through DOMPurify.",
           },
         ],
       },
@@ -622,11 +667,17 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
     noWrap: true,
     inputs: [
       {
+        name: "scope",
+        type: "text",
+        enum: ["products", "help"],
+        defaultValue: "products",
+        helperText:
+          "products searches the catalog; help searches Help Center articles. Algolia isn't configured yet - this is a real, working client-side search, not a stub.",
+      },
+      {
         name: "placeholder",
         type: "text",
-        defaultValue: "Search jackets, packs, boots...",
-        helperText:
-          "Filters the local product catalog client-side (name + category). Algolia isn't configured yet - this is a real, working filter, not a stub.",
+        helperText: "Optional. Defaults to a hint that matches the scope.",
       },
     ],
   },
@@ -682,6 +733,18 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
         name: "ctaLabel",
         type: "text",
         defaultValue: "Request trade pricing",
+        helperText: "Submit button label.",
+      },
+      {
+        name: "messagePlaceholder",
+        type: "text",
+        defaultValue: "Tell us about your team size and what you're outfitting for.",
+      },
+      {
+        name: "successMessage",
+        type: "longText",
+        defaultValue: "A Fieldnote Pro rep will reach out within one business day.",
+        helperText: "Shown after a successful submission, under \"Thanks, <first name>.\"",
       },
       {
         name: "endpoint",
@@ -796,9 +859,9 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
           {
             name: "quote",
             type: "longText",
-            defaultValue: "This gear held up exactly the way we hoped it would.",
+            defaultValue: "Three wet seasons in and the seams haven't budged.",
           },
-          { name: "authorName", type: "text", defaultValue: "Customer name" },
+          { name: "authorName", type: "text", defaultValue: "Jordan Reyes" },
           { name: "authorRole", type: "text" },
           {
             name: "avatar",
@@ -806,6 +869,237 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
             allowedFileTypes: ["jpeg", "jpg", "png", "webp"],
           },
         ],
+      },
+    ],
+  },
+
+  {
+    component: CategoryTiles,
+    name: "CategoryTiles",
+    group: "Fieldnote",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23F7F5F1'/%3E%3Crect x='5' y='8' width='9' height='24' rx='2' fill='%231B3A2F'/%3E%3Crect x='15.5' y='8' width='9' height='24' rx='2' fill='%23D4622A'/%3E%3Crect x='26' y='8' width='9' height='24' rx='2' fill='%231B3A2F'/%3E%3Crect x='7' y='26' width='5' height='2' fill='%23FFFFFF'/%3E%3Crect x='17.5' y='26' width='5' height='2' fill='%23FFFFFF'/%3E%3Crect x='28' y='26' width='5' height='2' fill='%23FFFFFF'/%3E%3C/svg%3E",
+    noWrap: true,
+    inputs: [
+      { name: "heading", type: "text", defaultValue: "Shop by category" },
+      { name: "subheading", type: "longText" },
+      {
+        name: "linkLabel",
+        type: "text",
+        helperText: "Optional header link. Renders only with a link URL.",
+      },
+      { name: "linkHref", type: "url" },
+      { name: "columns", type: "text", enum: ["2", "3", "4"], defaultValue: "3" },
+      {
+        name: "tiles",
+        type: "list",
+        defaultValue: [
+          {
+            label: "Jackets & Shells",
+            description: "Rain shells, down parkas and softshells for real weather.",
+            image: "https://images.pexels.com/photos/13831839/pexels-photo-13831839.jpeg?auto=compress&cs=tinysrgb&w=1200",
+            imageAlt: "A hiker in a green waterproof shell with the hood up",
+            href: "/shop/jackets",
+          },
+          {
+            label: "Packs & Bags",
+            description: "Daypacks, travel duffels and expedition packs.",
+            image: "https://cdn.builder.io/api/v1/image/assets%2F3a593c5220b04d469e25606e2987ebc0%2F82e54002ba2b4ebab1af0f449a05d87c",
+            imageAlt: "A hiker carrying an orange trekking pack on a forest trail",
+            href: "/shop/packs",
+          },
+          {
+            label: "Footwear",
+            description: "Hiking boots, trail runners and camp shoes.",
+            image: "https://cdn.builder.io/api/v1/image/assets%2F3a593c5220b04d469e25606e2987ebc0%2F5d69f887e3d143cf83b8bf3c40145f23",
+            imageAlt: "Leather hiking boots on a grassy trail",
+            href: "/shop/footwear",
+          },
+        ],
+        subFields: [
+          { name: "label", type: "text", defaultValue: "Camp & Travel" },
+          { name: "description", type: "text" },
+          { name: "image", type: "file", allowedFileTypes: ["jpeg", "jpg", "png", "webp"] },
+          { name: "imageAlt", type: "text" },
+          { name: "href", type: "url", defaultValue: "/shop/camp-travel" },
+        ],
+      },
+    ],
+  },
+  {
+    component: MediaText,
+    name: "MediaText",
+    group: "Fieldnote",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23FFFFFF' stroke='%23E8DFD2' stroke-width='2'/%3E%3Crect x='5' y='9' width='14' height='22' rx='2' fill='%231B3A2F'/%3E%3Cpath d='M7 27l4-6 3 3 2-2 3 5H7z' fill='%23D4622A'/%3E%3Crect x='22' y='13' width='13' height='3' fill='%2314161A'/%3E%3Crect x='22' y='19' width='13' height='2' fill='%235C6670'/%3E%3Crect x='22' y='23' width='10' height='2' fill='%235C6670'/%3E%3C/svg%3E",
+    noWrap: true,
+    inputs: [
+      { name: "eyebrow", type: "text", defaultValue: "Repair, not replace" },
+      {
+        name: "heading",
+        type: "text",
+        defaultValue: "Every repair starts at our Portland bench",
+      },
+      {
+        name: "body",
+        type: "richText",
+        defaultValue:
+          "<p>Torn shells, blown zippers, delaminated seams: our repair team fixed more than 4,000 pieces last year, free, for as long as their owners keep them.</p>",
+        helperText: "Rendered as sanitized HTML - all output is passed through DOMPurify.",
+      },
+      {
+        name: "image",
+        type: "file",
+        allowedFileTypes: ["jpeg", "jpg", "png", "webp"],
+        defaultValue: "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?w=1600&q=80&auto=format&fit=crop",
+      },
+      {
+        name: "imageAlt",
+        type: "text",
+        defaultValue: "Hand tools hanging on a workshop wall",
+      },
+      { name: "imagePosition", type: "text", enum: ["left", "right"], defaultValue: "left" },
+      {
+        name: "linkLabel",
+        type: "text",
+        helperText: "Optional text link under the copy. Renders only with a link URL.",
+      },
+      { name: "linkHref", type: "url" },
+    ],
+  },
+  {
+    component: StatBand,
+    name: "StatBand",
+    group: "Fieldnote",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%231B3A2F'/%3E%3Crect x='5' y='14' width='8' height='2' fill='%23D4622A'/%3E%3Crect x='16' y='14' width='8' height='2' fill='%23D4622A'/%3E%3Crect x='27' y='14' width='8' height='2' fill='%23D4622A'/%3E%3Crect x='5' y='19' width='7' height='5' fill='%23FFFFFF'/%3E%3Crect x='16' y='19' width='7' height='5' fill='%23FFFFFF'/%3E%3Crect x='27' y='19' width='7' height='5' fill='%23FFFFFF'/%3E%3Crect x='5' y='27' width='8' height='2' fill='%23E8DFD2'/%3E%3Crect x='16' y='27' width='8' height='2' fill='%23E8DFD2'/%3E%3Crect x='27' y='27' width='8' height='2' fill='%23E8DFD2'/%3E%3C/svg%3E",
+    noWrap: true,
+    inputs: [
+      { name: "heading", type: "text", helperText: "Optional small label above the numbers." },
+      {
+        name: "stats",
+        type: "list",
+        helperText: "Up to four. Colors follow the surrounding Container background.",
+        defaultValue: [
+          { value: "4,000+", label: "Pieces repaired free at our Portland bench last year" },
+          { value: "1 season", label: "Of guide field-testing before any product gets a SKU" },
+          { value: "Lifetime", label: "Repair guarantee on everything we make" },
+        ],
+        subFields: [
+          { name: "value", type: "text", defaultValue: "60 days" },
+          { name: "label", type: "text", defaultValue: "To return unworn gear for a full refund" },
+        ],
+      },
+    ],
+  },
+  {
+    component: PullQuote,
+    name: "PullQuote",
+    group: "Fieldnote",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23E8DFD2'/%3E%3Cpath d='M13 11h6v6c0 3-2 5-5 5v-2c1.5 0 2.5-1 2.5-2H13v-7z' fill='%23D4622A'/%3E%3Cpath d='M21 11h6v6c0 3-2 5-5 5v-2c1.5 0 2.5-1 2.5-2H21v-7z' fill='%23D4622A'/%3E%3Crect x='9' y='26' width='22' height='2.5' fill='%2314161A'/%3E%3C/svg%3E",
+    noWrap: true,
+    inputs: [
+      {
+        name: "quote",
+        type: "longText",
+        defaultValue:
+          "If a jacket can't survive a season with our guides, it has no business on a shelf with our name on it.",
+      },
+      { name: "attribution", type: "text", defaultValue: "Dana Whitcomb" },
+      { name: "role", type: "text", defaultValue: "Co-founder, Fieldnote" },
+    ],
+  },
+  {
+    component: StoreList,
+    name: "StoreList",
+    group: "Fieldnote",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23F7F5F1'/%3E%3Crect x='5' y='8' width='14' height='11' rx='2' fill='%23FFFFFF' stroke='%235C6670'/%3E%3Crect x='21' y='8' width='14' height='11' rx='2' fill='%23FFFFFF' stroke='%235C6670'/%3E%3Crect x='5' y='22' width='14' height='11' rx='2' fill='%23FFFFFF' stroke='%235C6670'/%3E%3Crect x='21' y='22' width='14' height='11' rx='2' fill='%23FFFFFF' stroke='%235C6670'/%3E%3Ccircle cx='9' cy='12' r='1.6' fill='%23D4622A'/%3E%3Ccircle cx='25' cy='12' r='1.6' fill='%23D4622A'/%3E%3Ccircle cx='9' cy='26' r='1.6' fill='%23D4622A'/%3E%3Ccircle cx='25' cy='26' r='1.6' fill='%23D4622A'/%3E%3C/svg%3E",
+    noWrap: true,
+    inputs: [
+      { name: "heading", type: "text", defaultValue: "Our stores" },
+      { name: "subheading", type: "longText" },
+      {
+        name: "stores",
+        type: "list",
+        helperText: "Stores are grouped under their region, in list order.",
+        defaultValue: [
+          {
+            name: "Fieldnote Portland",
+            region: "Pacific Northwest",
+            address: "1420 NW Everett St",
+            city: "Portland, OR 97209",
+            hours: "Mon\u2013Sat 10am\u20137pm, Sun 11am\u20136pm",
+            phone: "(503) 555-0142",
+            flagship: true,
+          },
+          {
+            name: "Fieldnote Seattle",
+            region: "Pacific Northwest",
+            address: "2201 Western Ave",
+            city: "Seattle, WA 98121",
+            hours: "Mon\u2013Sat 10am\u20137pm, Sun 11am\u20136pm",
+            phone: "(206) 555-0178",
+          },
+        ],
+        subFields: [
+          { name: "name", type: "text", defaultValue: "Fieldnote Denver" },
+          { name: "region", type: "text", defaultValue: "Mountain West" },
+          { name: "address", type: "text", defaultValue: "1550 Platte St" },
+          { name: "city", type: "text", defaultValue: "Denver, CO 80202" },
+          { name: "hours", type: "text", defaultValue: "Mon\u2013Sat 10am\u20137pm, Sun 11am\u20136pm" },
+          { name: "phone", type: "text", defaultValue: "(303) 555-0119" },
+          { name: "flagship", type: "boolean", defaultValue: false },
+        ],
+      },
+    ],
+  },
+  {
+    component: PolicyDocument,
+    name: "PolicyDocument",
+    group: "Fieldnote",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23FFFFFF' stroke='%23E8DFD2' stroke-width='2'/%3E%3Crect x='5' y='9' width='8' height='2' fill='%235C6670'/%3E%3Crect x='5' y='13' width='8' height='2' fill='%23D4622A'/%3E%3Crect x='5' y='17' width='8' height='2' fill='%235C6670'/%3E%3Crect x='16' y='9' width='19' height='3' fill='%2314161A'/%3E%3Crect x='16' y='15' width='19' height='2' fill='%235C6670'/%3E%3Crect x='16' y='19' width='19' height='2' fill='%235C6670'/%3E%3Crect x='16' y='25' width='19' height='3' fill='%2314161A'/%3E%3Crect x='16' y='31' width='14' height='2' fill='%235C6670'/%3E%3C/svg%3E",
+    noWrap: true,
+    inputs: [
+      {
+        name: "intro",
+        type: "richText",
+        helperText: "Optional lead paragraph above the first section.",
+      },
+      {
+        name: "sections",
+        type: "list",
+        defaultValue: [
+          {
+            heading: "Who we are",
+            body: "<p>Fieldnote Outfitters, Inc. operates fieldnote-outfitters.com and our retail stores. Questions about this policy can go to legal@fieldnote-outfitters.com.</p>",
+          },
+          {
+            heading: "What this covers",
+            body: "<p>This policy applies to your use of our website, our stores, and any purchase you make from us.</p>",
+          },
+          {
+            heading: "Changes to this policy",
+            body: "<p>We'll post any changes here and update the date at the top of the page.</p>",
+          },
+        ],
+        subFields: [
+          { name: "heading", type: "text", defaultValue: "Contact us" },
+          {
+            name: "body",
+            type: "richText",
+            defaultValue: "<p>Email legal@fieldnote-outfitters.com and we'll respond within 30 days.</p>",
+          },
+        ],
+        helperText: "Each section gets an anchor and an entry in the On this page list.",
+      },
+      {
+        name: "showToc",
+        type: "boolean",
+        defaultValue: true,
+        helperText: "Shows the On this page list once there are three or more sections.",
       },
     ],
   },

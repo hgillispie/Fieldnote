@@ -5,6 +5,7 @@ import { Suspense, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { DEMO_LOCALE_OPTIONS } from "@/lib/locale";
 import { SHOP_CATEGORIES } from "@/lib/shop-categories";
+import { SearchBox } from "@/components/builder/SearchBox";
 
 // ENTERPRISE PATTERN: SECTION MODELS — the "keep it in code" side of the
 // tradeoff
@@ -71,8 +72,6 @@ const NAV_LINKS = [
   { href: "/pro", label: "Pro" },
   { href: "/card", label: "Card" },
 ];
-
-const CART_ITEM_COUNT = 2;
 
 function MarkIcon() {
   return (
@@ -242,6 +241,7 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [shopMobileOpen, setShopMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -317,7 +317,9 @@ export function Navbar() {
           </Suspense>
           <button
             type="button"
-            aria-label="Search"
+            aria-label={searchOpen ? "Close search" : "Search"}
+            aria-expanded={searchOpen}
+            onClick={() => setSearchOpen((open) => !open)}
             className="hidden rounded-full p-2 text-sand/90 transition hover:bg-surface/10 hover:text-accent sm:inline-flex"
           >
             <SearchIcon />
@@ -332,14 +334,9 @@ export function Navbar() {
           <Link
             href="/cart"
             aria-label="Cart"
-            className="relative rounded-full p-2 text-sand/90 transition hover:bg-surface/10 hover:text-accent"
+            className="rounded-full p-2 text-sand/90 transition hover:bg-surface/10 hover:text-accent"
           >
             <CartIcon />
-            {CART_ITEM_COUNT > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold leading-none text-surface">
-                {CART_ITEM_COUNT}
-              </span>
-            )}
           </Link>
           <button
             type="button"
@@ -352,6 +349,19 @@ export function Navbar() {
           </button>
         </div>
       </div>
+
+      {searchOpen && (
+        <div
+          className="border-t border-surface/10 bg-primary"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") setSearchOpen(false);
+          }}
+        >
+          <div className="mx-auto max-w-6xl px-6 py-4">
+            <SearchBox scope="products" autoFocus />
+          </div>
+        </div>
+      )}
 
       {mobileOpen && (
         <nav className="border-t border-surface/10 bg-primary md:hidden">

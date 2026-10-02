@@ -1,6 +1,7 @@
 "use client";
 
 import DOMPurify from "isomorphic-dompurify";
+import { EditorEmptyState } from "./EditorEmptyState";
 
 type RichTextWidth = "narrow" | "default" | "wide";
 
@@ -17,18 +18,16 @@ const WIDTH_CLASSES: Record<RichTextWidth, string> = {
   wide: "max-w-5xl",
 };
 
-const DEFAULT_CONTENT = `
-  <p>Every Fieldnote jacket, pack and boot goes through the same test before it ships: a season in the hands of our own guides, on the actual trips we sell you on.</p>
-  <p>That's the difference between gear that looks rugged on a shelf and gear that <strong>holds up on day nine of a ten-day traverse</strong> — worn, rained on, and packed away wet more times than we'd like to admit.</p>
-  <p>Read more about how we source materials and test in the field on our <a href="/sustainability">sustainability page</a>.</p>
-`;
-
 export function RichText({
-  content = DEFAULT_CONTENT,
+  content,
   width = "default",
   attributes,
 }: RichTextProps) {
-  const safeHtml = DOMPurify.sanitize(content);
+  const safeHtml = content ? DOMPurify.sanitize(content) : "";
+
+  if (!safeHtml.trim()) {
+    return <EditorEmptyState attributes={attributes} message="Add copy in the options panel." />;
+  }
 
   return (
     <div {...attributes}>

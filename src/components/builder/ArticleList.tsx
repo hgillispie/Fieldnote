@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { BUILDER_API_KEY } from "@/lib/builder-config";
 import { resolveReference, type BuilderReference } from "@/lib/builder-refs";
+import { EditorEmptyState } from "./EditorEmptyState";
 
 type ArticleListSource = "manual" | "surface";
 type ArticleListColumns = "2" | "3" | "4";
@@ -60,53 +61,62 @@ const COLUMN_CLASSES: Record<ArticleListColumns, string> = {
   "4": "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",
 };
 
-const SURFACE_BASE: Record<ArticleSurface, string> = {
+// Only surfaces with a detail route are linkable. Pro articles have no
+// /pro/<slug> route, so they're left out rather than rendered as dead links.
+const SURFACE_BASE: Partial<Record<ArticleSurface, string>> = {
   help: "/help",
   blog: "/blog",
-  pro: "/pro",
 };
 
-// Real, non-lorem Fieldnote articles across all three surfaces so the list
-// never renders empty — used whenever the manual list is empty, or the
-// surface-filtered fetch is unconfigured, empty, or fails.
+// Mirrors real, published help and blog articles so a failed fetch still
+// links somewhere that resolves.
 const FALLBACK_ARTICLES: GridArticle[] = [
   {
-    title: "How to choose the right rain shell for your climate",
-    slug: "choosing-a-rain-shell",
+    title: "Shipping & Returns",
+    slug: "shipping-returns",
     excerpt:
-      "3-layer, 2.5-layer, or waterproof-breathable coating — what actually matters depends on where you're hiking.",
-    authorName: "Fieldnote Gear Team",
+      "Free standard shipping over $75, and a 30-day return window on anything that doesn't work out.",
     surface: "help",
-    readingMinutes: 6,
   },
   {
-    title: "Six weeks on the Pacific Crest Trail",
-    slug: "six-weeks-on-the-pacific-crest-trail",
+    title: "How Do I Find My Size?",
+    slug: "how-do-i-find-my-size",
     excerpt:
-      "What survived, what didn't, and the three pieces of gear our guide repacked every single night.",
-    authorName: "Maren Osei",
+      "Every product page has a size chart under the fit details. Here's how to use it, and what to do if you're between sizes.",
+    surface: "help",
+  },
+  {
+    title: "Repair Guarantee",
+    slug: "repair-guarantee",
+    excerpt:
+      "Every Fieldnote piece is covered by free repairs for as long as you own it. Here's what's covered and how to start a claim.",
+    surface: "help",
+  },
+  {
+    title: "How We Test Every Shell Before It Ships",
+    slug: "how-we-test-every-shell",
+    excerpt: "A season on real trails, in real rain, before any shell gets a SKU.",
     surface: "blog",
-    readingMinutes: 9,
   },
   {
-    title: "Bulk ordering and trade pricing for outfitters",
-    slug: "bulk-ordering-for-outfitters",
-    excerpt:
-      "How guide services and rental shops set up a Fieldnote Pro account and place standing seasonal orders.",
-    authorName: "Fieldnote Pro Team",
-    surface: "pro",
-    readingMinutes: 4,
+    title: "Layering 101: What Actually Keeps You Warm",
+    slug: "layering-101",
+    excerpt: "Base, mid, shell: what each layer does, and the mistakes that leave you cold.",
+    surface: "blog",
   },
   {
-    title: "Returns, repairs, and our lifetime guarantee explained",
-    slug: "returns-and-repairs-explained",
-    excerpt:
-      "What's covered, what to expect at the repair bench, and how to start a claim without waiting on hold.",
-    authorName: "Fieldnote Gear Team",
-    surface: "help",
-    readingMinutes: 5,
+    title: "The Case for Repairing Gear Instead of Replacing It",
+    slug: "repair-instead-of-replace",
+    excerpt: "Why a lifetime repair guarantee is the most honest sustainability claim we can make.",
+    surface: "blog",
   },
 ];
+
+function fallbackFor(surface: SurfaceFilter): GridArticle[] {
+  return surface === "all"
+    ? FALLBACK_ARTICLES
+    : FALLBACK_ARTICLES.filter((article) => article.surface === surface);
+}
 
 function toGridArticles(items: BuilderListItem[]): GridArticle[] {
   return items
@@ -143,7 +153,7 @@ async function fetchSurfaceArticles(
   surface: SurfaceFilter,
   topicId?: string,
 ): Promise<GridArticle[]> {
-  if (!BUILDER_API_KEY) return FALLBACK_ARTICLES;
+  if (!BUILDER_API_KEY) return fallbackFor(surface);
 
   const params = new URLSearchParams({
     apiKey: BUILDER_API_KEY,
@@ -176,12 +186,12 @@ async function fetchSurfaceArticles(
       readingMinutes: data.readingMinutes,
     }));
 
-  return articles.length > 0 ? articles : FALLBACK_ARTICLES;
+  return articles.length > 0 ? articles : fallbackFor(surface);
 }
 
 export function ArticleList({
   source = "manual",
-  heading = "From the field",
+  heading,
   columns = "3",
   articles,
   surface = "all",
@@ -199,7 +209,7 @@ export function ArticleList({
         if (!cancelled) setFetchedItems(result);
       })
       .catch(() => {
-        if (!cancelled) setFetchedItems(FALLBACK_ARTICLES);
+        if (!cancelled) setFetchedItems(fallbackFor(surface));
       });
     return () => {
       cancelled = true;
@@ -207,12 +217,17 @@ export function ArticleList({
   }, [source, surface, topic?.id]);
 
   const manualItems = toGridArticles(articles ?? []);
-  const items =
+  const items = (
     source === "manual"
       ? manualItems.length > 0
         ? manualItems
-        : FALLBACK_ARTICLES
-      : fetchedItems ?? FALLBACK_ARTICLES;
+        : fallbackFor("all")
+      : fetchedItems ?? fallbackFor(surface)
+  ).filter((article) => SURFACE_BASE[article.surface]);
+
+  if (items.length === 0) {
+    return <EditorEmptyState attributes={attributes} message="No linkable articles for this selection." />;
+  }
 
   return (
     <div {...attributes}>

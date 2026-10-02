@@ -2,6 +2,7 @@
 
 import * as RadixAccordion from "@radix-ui/react-accordion";
 import DOMPurify from "isomorphic-dompurify";
+import { EditorEmptyState } from "./EditorEmptyState";
 
 type AccordionBehavior = "single" | "multiple";
 
@@ -17,33 +18,8 @@ interface AccordionProps {
   attributes?: Record<string, unknown>;
 }
 
-// Real, non-lorem Fieldnote shipping/returns copy so the accordion never
-// looks empty — used whenever the `items` list input is unset or empty.
-const FALLBACK_ITEMS: Required<AccordionListItem>[] = [
-  {
-    question: "What's your return policy?",
-    answer:
-      "<p>Unworn gear can be returned within 60 days for a full refund. Worn gear that fails on the trail is covered by our lifetime repair guarantee instead of a return \u2014 <a href=\"/help\">contact us</a> and we'll sort out a repair or replacement.</p>",
-  },
-  {
-    question: "How long does shipping take?",
-    answer:
-      "<p>Standard shipping arrives in 3\u20135 business days and is free on orders over $75. Expedited 2-day shipping is available at checkout if you're packing for a trip this week.</p>",
-  },
-  {
-    question: "How do I find my size?",
-    answer:
-      "<p>Every product page has a size chart under the fit details. If you're between sizes, we generally recommend sizing up for layering room \u2014 our <a href=\"/help\">size guide</a> covers each category in more depth.</p>",
-  },
-  {
-    question: "Do you ship internationally?",
-    answer:
-      "<p>Yes \u2014 we ship to over 30 countries. Duties and import taxes are calculated at checkout so there are no surprise charges on delivery.</p>",
-  },
-];
-
 export function Accordion({
-  heading = "Shipping & returns",
+  heading,
   behavior = "single",
   items,
   attributes,
@@ -51,7 +27,10 @@ export function Accordion({
   const validItems = (items ?? []).filter(
     (item): item is Required<AccordionListItem> => !!item.question && !!item.answer,
   );
-  const resolvedItems = validItems.length > 0 ? validItems : FALLBACK_ITEMS;
+
+  if (validItems.length === 0) {
+    return <EditorEmptyState attributes={attributes} message="Add questions in the options panel." />;
+  }
 
   const rootProps =
     behavior === "multiple"
@@ -64,7 +43,7 @@ export function Accordion({
         <h2 className="mb-6 font-display text-2xl text-ink">{heading}</h2>
       )}
       <RadixAccordion.Root {...rootProps} className="divide-y divide-sand border-y border-sand">
-        {resolvedItems.map((item, index) => (
+        {validItems.map((item, index) => (
           <RadixAccordion.Item
             key={`${item.question}-${index}`}
             value={`item-${index}`}
