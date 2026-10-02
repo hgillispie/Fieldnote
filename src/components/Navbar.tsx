@@ -312,9 +312,11 @@ export function Navbar() {
         </nav>
 
         <div className="flex items-center gap-1">
-          <Suspense fallback={null}>
-            <LocaleSwitcher />
-          </Suspense>
+          <div className="hidden sm:block">
+            <Suspense fallback={null}>
+              <LocaleSwitcher />
+            </Suspense>
+          </div>
           <button
             type="button"
             aria-label={searchOpen ? "Close search" : "Search"}
@@ -414,6 +416,11 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
+            <div className="border-t border-surface/10 py-3 sm:hidden">
+              <Suspense fallback={null}>
+                <LocaleSwitcher />
+              </Suspense>
+            </div>
           </div>
         </nav>
       )}

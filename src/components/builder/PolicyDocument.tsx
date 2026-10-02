@@ -46,7 +46,7 @@ export function PolicyDocument({ intro, sections, showToc = true, attributes }: 
   const withToc = showToc && items.length >= 3;
 
   return (
-    <SectionShell attributes={attributes} spacing="md">
+    <SectionShell attributes={attributes} spacing="sm">
       <div className={withToc ? "lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-16" : ""}>
         {withToc && (
           <nav aria-label="On this page" className="mb-10 lg:mb-0">

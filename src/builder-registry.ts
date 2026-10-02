@@ -568,11 +568,11 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
             allowedFileTypes: ["jpeg", "jpg", "png", "webp", "svg"],
             helperText: "Optional - overrides the icon when set.",
           },
-          { name: "title", type: "text", defaultValue: "Free 60-day returns" },
+          { name: "title", type: "text", defaultValue: "Free 30-day returns" },
           {
             name: "description",
             type: "longText",
-            defaultValue: "Unworn gear can be returned within 60 days for a full refund.",
+            defaultValue: "Unworn gear can be returned within 30 days for a full refund.",
           },
           { name: "linkLabel", type: "text" },
           { name: "linkHref", type: "url" },
@@ -632,7 +632,7 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
           {
             question: "What's your return policy?",
             answer:
-              "<p>Unworn gear can be returned within 60 days for a full refund. Worn gear that fails on the trail is covered by our lifetime repair guarantee instead of a return - <a href=\"/help\">contact us</a> and we'll sort out a repair or replacement.</p>",
+              "<p>Unworn gear can be returned within 30 days for a full refund. Worn gear that fails on the trail is covered by our lifetime repair guarantee instead of a return - <a href=\"/help\">contact us</a> and we'll sort out a repair or replacement.</p>",
           },
           {
             question: "How long does shipping take?",
@@ -651,7 +651,7 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
             name: "answer",
             type: "richText",
             defaultValue:
-              "<p>Yes. Exchanges are free within 60 days of delivery. Start one from your order confirmation email.</p>",
+              "<p>Yes. Exchanges are free within 30 days of delivery. Start one from your order confirmation email.</p>",
             helperText: "Rendered as sanitized HTML - all output is passed through DOMPurify.",
           },
         ],
@@ -986,7 +986,7 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
           { value: "Lifetime", label: "Repair guarantee on everything we make" },
         ],
         subFields: [
-          { name: "value", type: "text", defaultValue: "60 days" },
+          { name: "value", type: "text", defaultValue: "30 days" },
           { name: "label", type: "text", defaultValue: "To return unworn gear for a full refund" },
         ],
       },
