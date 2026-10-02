@@ -11,8 +11,9 @@
 // original and planned entry to .content-backups/<timestamp>/, and with
 // --apply PATCHes the Write API. Blocks are rebuilt deterministically, so
 // re-running is idempotent. Restore an entry by PATCHing its *.original.json
-// `data`/`variations` back. Only `data` (and `variations` where an A/B test
-// exists) are written: no model schema, targeting, schedule or URL changes.
+// `data` back (variations: PUT the stored entry with the original variation
+// `data`). Only `data` and A/B variation `data` change: no model schema,
+// targeting, schedule, split ratio or URL changes.
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -801,12 +802,21 @@ async function fetchEntry(model, id) {
 }
 
 async function writeEntry(model, id, patch) {
-  const res = await fetch(`https://builder.io/api/v1/write/${model}/${id}`, {
-    method: "PATCH",
-    headers: { Authorization: `Bearer ${PRIVATE_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify(patch),
-  });
+  const url = `https://builder.io/api/v1/write/${model}/${id}`;
+  const headers = { Authorization: `Bearer ${PRIVATE_KEY}`, "Content-Type": "application/json" };
+  const res = await fetch(url, { method: "PATCH", headers, body: JSON.stringify({ data: patch.data }) });
   if (!res.ok) throw new Error(`write ${model}/${id}: ${res.status} ${await res.text()}`);
+  if (!patch.variations) return;
+
+  // The Write API returns 200 but ignores `variations` on PATCH, so PUT the full
+  // stored entry (returned by the PATCH) back with only each variation's data swapped.
+  const stored = await res.json();
+  for (const [variationId, variation] of Object.entries(patch.variations)) {
+    if (!stored.variations?.[variationId]) throw new Error(`${model}/${id}: variation ${variationId} not found`);
+    stored.variations[variationId].data = variation.data;
+  }
+  const put = await fetch(url, { method: "PUT", headers, body: JSON.stringify(stored) });
+  if (!put.ok) throw new Error(`write variations ${model}/${id}: ${put.status} ${await put.text()}`);
 }
 
 mkdirSync(OUT_DIR, { recursive: true });

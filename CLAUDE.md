@@ -231,11 +231,15 @@ GitHub App issue again — they produce different error text (compare "Permissio
 - **New page-type blocks:** `CategoryTiles`, `MediaText`, `StatBand`,
   `PullQuote`, `StoreList`, `PolicyDocument`, Hero `minimal` variant;
   SearchBox `scope: "help"`.
-- **Content changes are staged, not applied:** `scripts/content/coherence-pass.mjs`
-  (dry run by default; `BUILDER_PRIVATE_KEY=bpk-... node scripts/content/coherence-pass.mjs --apply`).
-  It rebuilds /shop (curated picks), homepage + its A/B variation, legal,
-  editorial, help, stores, cart/account, LeadForm labels on campaign pages, and
-  mismatched article images. Backups go to `.content-backups/` (gitignored).
+- **Content changes applied 2026-10-02 (25 entries):** `scripts/content/coherence-pass.mjs`
+  (dry run by default; `BUILDER_PRIVATE_KEY=bpk-... node scripts/content/coherence-pass.mjs --apply`,
+  idempotent). It rebuilds /shop (curated picks), homepage, legal, editorial,
+  help, stores, cart/account, LeadForm labels on campaign pages, A/B variations
+  on homepage/help/stores/pro, and mismatched article images. Backups go to
+  `.content-backups/` (gitignored).
+- **Write API gotcha:** PATCH returns 200 but silently ignores `variations`.
+  Variation edits need a PUT of the full stored entry (the PATCH response body)
+  with only the variation `data` swapped; the script does this.
 - **Scheduling gotcha:** the `/card/intro-apr` and `/pro/trade-pricing`
   landing pages are date-scheduled; outside their windows `/card/intro-apr`
   falls through to the evergreen `page` entry, and `/pro/trade-pricing` 404s.
