@@ -34,20 +34,22 @@ export const DEFAULT_VIDEOS: VideoItem[] = [
     duration: "2:30",
   },
   {
-    title: "Through the Mt. Baker Wilderness",
-    url: "https://www.youtube.com/watch?v=TW4MEtOmNrQ",
-    description: "The Chain Lakes Loop in Washington's North Cascades.",
+    title: "Summer in the Colorado Rocky Mountains",
+    url: "https://www.youtube.com/watch?v=qLd-tYHD6hM",
+    description: "Wildflowers on the mountainsides and summer storms rolling through the high peaks.",
+    duration: "2:43",
   },
   {
-    title: "Autumn in the High Sierra",
-    url: "https://www.youtube.com/watch?v=imsg_hoaScI",
-    description: "Four days of backpacking through golden aspens and alpine lakes in the John Muir Wilderness.",
+    title: "Hiking Cortina in the Dolomites",
+    url: "https://www.youtube.com/watch?v=0qy_Om-j4tQ",
+    description: "Trails and jagged peaks around Cortina d'Ampezzo in Italy's Dolomites.",
+    duration: "2:56",
   },
   {
-    title: "Silent Alpine Hiking: Montana Big Snowies",
-    url: "https://www.youtube.com/watch?v=Je1j3t6aoRE",
-    description: "A quiet traverse of the entire Big Snowy Mountain range, set to the sounds of nature.",
-    duration: "19:00",
+    title: "Fall in the Alps: Italian Dolomites",
+    url: "https://www.youtube.com/watch?v=Ae-x5EYkaEA",
+    description: "A quick look at autumn light across the Dolomite ridgelines.",
+    duration: "1:37",
   },
 ];
 
