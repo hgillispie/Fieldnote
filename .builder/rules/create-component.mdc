@@ -1,0 +1,32 @@
+---
+description: Trigger phrase "create component <description>" — build the component and show it on its own preview page
+alwaysApply: true
+---
+
+# "create component" workflow
+
+When the user's message starts with **"create component"**, everything after it is the description of the component to build. Do the following without asking for confirmation:
+
+## 1. Build the component
+
+- Create it in `src/components/builder/<ComponentName>.tsx`, following every rule in `.builder/rules/components.mdc` (`{...attributes}` on the root element, `noWrap: true`, static Tailwind class maps, real thumbnail, real non-lorem defaults, DOMPurify for any HTML).
+- Use only design tokens from `.builder/rules/tokens.mdc` — no raw hex values. If a new token is needed, add it in all three places the tokens rule lists.
+- Add it to the `CUSTOM_COMPONENTS` array in `src/builder-registry.ts`. Never call `register("component", ...)` on its own.
+
+## 2. Create a preview page
+
+- Create `src/app/preview/<component-name-kebab-case>/page.tsx`, a Server Component that renders only the new component with its default props (pass `attributes={{}}` if the component requires it). If the component has variants, render each one stacked on the page, with a small label above each.
+- Export `metadata` with `robots: { index: false, follow: false }`. This is an internal review page, so it must never be indexed or linked from the app.
+- Don't add anything else to the page: no extra copy, headings or wrappers beyond the variant labels. The point is to see the component on its own.
+- Import the component directly. The preview page does not go through Builder `<Content>`.
+
+## 3. Show the result
+
+- Navigate the preview to `/preview/<component-name-kebab-case>` so the user sees it right away.
+- Check it in the browser before reporting done. Fix any visual or console errors first.
+- End with one or two sentences: the component's name, the preview URL, and anything the user may want to tweak.
+
+## Notes
+
+- If the description is too vague to build something sensible, pick reasonable defaults and say what you chose. Don't stop to ask.
+- If a component with that name already exists, update it and reuse its preview page rather than creating a duplicate.
