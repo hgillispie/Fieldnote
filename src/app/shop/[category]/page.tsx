@@ -7,6 +7,7 @@ import { BUILDER_API_KEY } from "@/lib/builder-config";
 import { RenderBuilderContent } from "@/components/RenderBuilderContent";
 import { ShopSortControl } from "@/components/ShopSortControl";
 import { SHOP_CATEGORIES, getShopCategory } from "@/lib/shop-categories";
+import { fetchPageEntry } from "@/lib/builder-page";
 import { firstBadge, type ProductBadges } from "@/lib/product-badges";
 
 /**
@@ -94,29 +95,7 @@ function formatPrice(price: number, currency: string) {
 // at the same path). Shared by the page component and generateMetadata so
 // an ad-hoc /shop/<slug> page gets a real <title> too, not just a fallback.
 async function fetchShopFallbackPage(slug: string) {
-  const urlPath = `/shop/${slug}`;
-
-  const landingPage = await fetchOneEntry({
-    fetch: builderFetch,
-    apiKey: BUILDER_API_KEY,
-    model: "landing-page",
-    userAttributes: { urlPath },
-    enrich: true,
-  }).catch(() => null);
-
-  const content =
-    landingPage ??
-    (await fetchOneEntry({
-      fetch: builderFetch,
-      apiKey: BUILDER_API_KEY,
-      model: "page",
-      userAttributes: { urlPath },
-      enrich: true,
-    }).catch(() => null));
-
-  if (!content) return null;
-
-  return { content, model: landingPage ? "landing-page" : "page" } as const;
+  return fetchPageEntry({ urlPath: `/shop/${slug}` });
 }
 
 // Every known category/slug combination is known at build time — no reason
