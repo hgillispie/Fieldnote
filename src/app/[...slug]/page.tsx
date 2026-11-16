@@ -161,9 +161,26 @@ export default async function CatchAllPage({
     notFound();
   }
 
+  // When the editor previews a different model's entry at a URL another
+  // model already serves, render with the edited model so Builder doesn't
+  // report a model-name mismatch; <Content> fetches the draft client-side.
+  const editedModelParam = isPreviewing(
+    rawSearchParams as Record<string, string | string[]>,
+  )
+    ? rawSearchParams["builder.preview"]
+    : undefined;
+  const editedModel = Array.isArray(editedModelParam)
+    ? editedModelParam[0]
+    : editedModelParam;
+  const isEditingOtherModel = !!editedModel && editedModel !== entry.model;
+
   return (
     <main className="flex-1">
-      <RenderBuilderContent content={entry.content} model={entry.model} locale={locale} />
+      <RenderBuilderContent
+        content={isEditingOtherModel ? null : entry.content}
+        model={isEditingOtherModel ? editedModel : entry.model}
+        locale={locale}
+      />
     </main>
   );
 }

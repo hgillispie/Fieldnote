@@ -134,6 +134,7 @@ import { register } from "@builder.io/sdk-react";
 import type { RegisteredComponent } from "@builder.io/sdk-react";
 import { Hero } from "@/components/builder/Hero";
 import { TextHero, ImageHero, SplitHero } from "@/components/builder/HeroVariants";
+import { HeroCarousel } from "@/components/builder/HeroCarousel";
 import { Container } from "@/components/builder/Container";
 import { IconCard } from "@/components/builder/IconCard";
 import { ProductCard } from "@/components/builder/ProductCard";
@@ -312,6 +313,118 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
     noWrap: true,
     // No `variant` input - hard-coded to "split" in HeroVariants.tsx.
     inputs: [...heroImageInputsBase(), ...heroImageFieldInputs()],
+  },
+  {
+    component: HeroCarousel,
+    name: "HeroCarousel",
+    group: "Heros",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%231B3A2F'/%3E%3Cpath d='M6 24l5-8 4 5 3-4 6 7H6z' fill='%23D4622A'/%3E%3Ccircle cx='15' cy='33' r='1.6' fill='%23E8DFD2'/%3E%3Ccircle cx='20' cy='33' r='1.6' fill='%23E8DFD2' fill-opacity='.5'/%3E%3Ccircle cx='25' cy='33' r='1.6' fill='%23E8DFD2' fill-opacity='.5'/%3E%3C/svg%3E",
+    noWrap: true,
+    inputs: [
+      {
+        name: "slides",
+        type: "list",
+        required: true,
+        helperText: "Each slide has its own image, text and optional button.",
+        defaultValue: [
+          {
+            eyebrow: "Fall/Winter 2026",
+            heading: "Gear for the long way round",
+            subheading:
+              "Technical outerwear and travel gear built to survive the trip you're actually taking — field-tested by our own guides before it ships to you.",
+            ctaLabel: "Shop the collection",
+            ctaHref: "/shop",
+            image:
+              "https://cdn.builder.io/api/v1/image/assets%2F3a593c5220b04d469e25606e2987ebc0%2F36e378be3a7a4c3eac1b3e2e68b2b071",
+            imageAlt:
+              "A hiker with a loaded backpack looking out over a misty, rust-colored mountain valley",
+          },
+          {
+            contentPosition: "left",
+            eyebrow: "Fieldnote Card",
+            heading: "The card built for the trip you're actually taking",
+            subheading: "No annual fee. 2x points on every Fieldnote purchase.",
+            ctaLabel: "Learn more",
+            ctaHref: "/card",
+            image:
+              "https://cdn.builder.io/api/v1/image/assets%2F3a593c5220b04d469e25606e2987ebc0%2F522a662ca2cf46a2aa5eaee50b8d6c3f",
+            imageAlt:
+              "A hand holding a dark green Fieldnote credit card in front of a mountain lake, an orange pack strap in the foreground",
+          },
+          {
+            eyebrow: "Jackets & Shells",
+            heading: "Built for the weather you actually get",
+            subheading:
+              "Rain shells, down parkas and softshells — field-tested by our guides before they ship.",
+            ctaLabel: "Shop jackets",
+            ctaHref: "/shop/jackets",
+            image:
+              "https://images.pexels.com/photos/13831839/pexels-photo-13831839.jpeg?auto=compress&cs=tinysrgb&w=1600",
+            imageAlt: "A hiker in a green waterproof shell with the hood up",
+          },
+          {
+            eyebrow: "Packs & Bags",
+            heading: "Pack once, carry anywhere",
+            subheading:
+              "Daypacks, travel duffels and expedition packs — backed by our lifetime repair guarantee.",
+            ctaLabel: "Shop packs",
+            ctaHref: "/shop/packs",
+            image:
+              "https://cdn.builder.io/api/v1/image/assets%2F3a593c5220b04d469e25606e2987ebc0%2F82e54002ba2b4ebab1af0f449a05d87c",
+            imageAlt: "A hiker carrying an orange trekking pack on a forest trail",
+          },
+        ],
+        subFields: [
+          {
+            name: "contentPosition",
+            type: "text",
+            enum: ["center", "left", "right"],
+            defaultValue: "center",
+            helperText:
+              "Where the text sits. Use left or right to keep it clear of the subject of the photo.",
+          },
+          { name: "eyebrow", type: "text" },
+          { name: "heading", type: "text", required: true },
+          { name: "subheading", type: "longText" },
+          {
+            name: "ctaLabel",
+            type: "text",
+            helperText: "Optional. The button only renders when both a label and a link are set.",
+          },
+          {
+            name: "ctaHref",
+            type: "url",
+            helperText: "Optional. Use a path (/card) or an in-page anchor (#apply).",
+          },
+          {
+            name: "image",
+            type: "file",
+            allowedFileTypes: ["jpeg", "jpg", "png", "webp", "svg"],
+          },
+          {
+            name: "imageAlt",
+            type: "text",
+            required: true,
+            helperText: "Required - describe the image for screen readers.",
+          },
+        ],
+      },
+      {
+        name: "autoplay",
+        type: "boolean",
+        defaultValue: true,
+        helperText:
+          "Advances automatically. Pauses on hover/focus and is off for visitors who prefer reduced motion.",
+      },
+      {
+        name: "intervalSeconds",
+        type: "number",
+        defaultValue: 6,
+        helperText: "Seconds each slide stays on screen (minimum 2).",
+        showIf: (options: Map<string, unknown>) => options.get("autoplay") !== false,
+      },
+    ],
   },
   {
     component: Container,
