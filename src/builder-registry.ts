@@ -1232,10 +1232,16 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
         defaultValue: "Films, how-tos and field stories from the Fieldnote team.",
       },
       {
+        name: "autoplay",
+        type: "boolean",
+        defaultValue: true,
+        helperText:
+          "Starts the main video as soon as the gallery loads (muted, as browsers require). Turn off to load videos only when a visitor clicks play.",
+      },
+      {
         name: "videos",
         type: "list",
-        helperText:
-          "One large player with the rest in a list beside it. Videos only load when a visitor clicks play.",
+        helperText: "One large player with the rest in a list beside it.",
         defaultValue: DEFAULT_VIDEOS,
         subFields: [
           { name: "title", type: "text", required: true, defaultValue: "New video" },

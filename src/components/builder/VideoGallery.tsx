@@ -17,6 +17,7 @@ interface VideoGalleryProps {
   heading?: string;
   subheading?: string;
   videos?: VideoItem[];
+  autoplay?: boolean;
   attributes?: Record<string, unknown>;
 }
 
@@ -27,28 +28,26 @@ type VideoSource =
 
 export const DEFAULT_VIDEOS: VideoItem[] = [
   {
-    title: "Big Buck Bunny",
-    url: "https://www.youtube.com/watch?v=aqz-KE-bpKQ",
-    description: "Replace with your own story, product demo or trail film.",
-    duration: "10:34",
+    title: "Cinematic Hike to the Summit of Hafjell",
+    url: "https://www.youtube.com/watch?v=5t5v-k0TPGs",
+    description: "A short climb to the top of Hafjell in Norway, from forest trail to open ridge.",
+    duration: "2:30",
   },
   {
-    title: "Sintel",
-    url: "https://www.youtube.com/watch?v=eRsGyueVLvQ",
-    description: "A lone traveler's long journey across a harsh landscape.",
-    duration: "14:48",
+    title: "Through the Mt. Baker Wilderness",
+    url: "https://www.youtube.com/watch?v=TW4MEtOmNrQ",
+    description: "The Chain Lakes Loop in Washington's North Cascades.",
   },
   {
-    title: "Tears of Steel",
-    url: "https://www.youtube.com/watch?v=R6MlUcmOul8",
-    description: "Paste a YouTube, Vimeo or direct .mp4 link for each video.",
-    duration: "12:14",
+    title: "Autumn in the High Sierra",
+    url: "https://www.youtube.com/watch?v=imsg_hoaScI",
+    description: "Four days of backpacking through golden aspens and alpine lakes in the John Muir Wilderness.",
   },
   {
-    title: "Elephants Dream",
-    url: "https://www.youtube.com/watch?v=TLkA0RELQ1g",
-    description: "Optional poster image overrides the automatic thumbnail.",
-    duration: "10:53",
+    title: "Silent Alpine Hiking: Montana Big Snowies",
+    url: "https://www.youtube.com/watch?v=Je1j3t6aoRE",
+    description: "A quiet traverse of the entire Big Snowy Mountain range, set to the sounds of nature.",
+    duration: "19:00",
   },
 ];
 
@@ -81,6 +80,7 @@ export function VideoGallery({
   heading,
   subheading,
   videos,
+  autoplay = true,
   attributes,
 }: VideoGalleryProps) {
   const items: ResolvedVideo[] = [];
@@ -91,7 +91,10 @@ export function VideoGallery({
   }
 
   const [activeIndex, setActiveIndex] = useState(0);
-  const [playing, setPlaying] = useState(false);
+  const [playing, setPlaying] = useState(autoplay);
+  // Browsers only allow autoplay without a click when muted; once a visitor
+  // clicks a video themselves, it plays with sound.
+  const [muted, setMuted] = useState(autoplay);
 
   if (items.length === 0) {
     return (
@@ -114,7 +117,11 @@ export function VideoGallery({
             key={currentIndex}
             video={items[currentIndex]}
             playing={playing}
-            onPlay={() => setPlaying(true)}
+            muted={muted}
+            onPlay={() => {
+              setMuted(false);
+              setPlaying(true);
+            }}
           />
           <div className="mt-4">
             <h3 className="font-display text-xl text-ink">{items[currentIndex].item.title}</h3>
@@ -131,6 +138,7 @@ export function VideoGallery({
                 type="button"
                 onClick={() => {
                   setActiveIndex(index);
+                  setMuted(false);
                   setPlaying(true);
                 }}
                 aria-current={index === currentIndex}
@@ -159,10 +167,12 @@ export function VideoGallery({
 function VideoPlayer({
   video,
   playing,
+  muted,
   onPlay,
 }: {
   video: ResolvedVideo;
   playing: boolean;
+  muted: boolean;
   onPlay: () => void;
 }) {
   const { item, source, poster } = video;
@@ -188,6 +198,7 @@ function VideoPlayer({
           poster={poster}
           controls
           autoPlay
+          muted={muted}
           playsInline
           className="h-full w-full"
           aria-label={item.title}
@@ -196,8 +207,8 @@ function VideoPlayer({
         <iframe
           src={
             source.kind === "youtube"
-              ? `https://www.youtube-nocookie.com/embed/${source.id}?autoplay=1&rel=0`
-              : `https://player.vimeo.com/video/${source.id}?autoplay=1`
+              ? `https://www.youtube-nocookie.com/embed/${source.id}?autoplay=1&rel=0${muted ? "&mute=1" : ""}`
+              : `https://player.vimeo.com/video/${source.id}?autoplay=1${muted ? "&muted=1" : ""}`
           }
           title={item.title}
           allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
