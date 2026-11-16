@@ -292,8 +292,8 @@ function ourStoryBlocks() {
         columns: "3",
         cards: [
           { icon: "leaf", title: "Sustainability", description: "Why a lifetime repair guarantee is our biggest environmental lever.", linkLabel: "Read more", linkHref: "/about/sustainability" },
-          { icon: "compass", title: "Careers", description: "Small teams, real trips, and five paid field days a year.", linkLabel: "See open roles", linkHref: "/careers" },
-          { icon: "mountain", title: "Visit a store", description: "Expert fitting and a guide on staff at all 14 locations.", linkLabel: "Find a store", linkHref: "/stores" },
+          { icon: "compass", title: "Careers", description: "Small teams, real trips, and five paid field days a year.", linkLabel: "See open roles", linkHref: "/about/careers" },
+          { icon: "mountain", title: "Visit a store", description: "Expert fitting and a guide on staff at all 14 locations.", linkLabel: "Find a store", linkHref: "/about/stores" },
         ],
       }),
     ]),
@@ -431,7 +431,7 @@ function helpBlocks(hero, suffix = "") {
           cards: [
             { icon: "compass", title: "Email support", description: "A real person replies within one business day, usually much sooner.", linkLabel: "support@fieldnote-outfitters.com", linkHref: "mailto:support@fieldnote-outfitters.com" },
             { icon: "shield", title: "Call us", description: "Mon–Fri 7am–6pm PT. Ask for a gear specialist for sizing and fit.", linkLabel: "1-800-555-0199", linkHref: "tel:18005550199" },
-            { icon: "mountain", title: "Visit a store", description: "Returns, repairs drop-off, and expert fitting at all 14 locations.", linkLabel: "Find a store", linkHref: "/stores" },
+            { icon: "mountain", title: "Visit a store", description: "Returns, repairs drop-off, and expert fitting at all 14 locations.", linkLabel: "Find a store", linkHref: "/about/stores" },
           ],
         }),
       ]),

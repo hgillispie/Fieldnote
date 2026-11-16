@@ -16,6 +16,8 @@ const nextConfig: NextConfig = {
     return [
       { source: "/about-fieldnote", destination: "/about", permanent: true },
       { source: "/sustainability", destination: "/about/sustainability", permanent: true },
+      { source: "/careers", destination: "/about/careers", permanent: true },
+      { source: "/stores", destination: "/about/stores", permanent: true },
     ];
   },
 };
