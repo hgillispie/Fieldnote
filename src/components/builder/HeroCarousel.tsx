@@ -4,7 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import { isEditing } from "@builder.io/sdk-react";
 import { SectionShell } from "./SectionShell";
 
+export type HeroCarouselContentPosition = "center" | "left" | "right";
+
 export interface HeroCarouselSlide {
+  contentPosition?: HeroCarouselContentPosition;
   eyebrow?: string;
   heading?: string;
   subheading?: string;
@@ -22,6 +25,33 @@ export interface HeroCarouselProps {
 }
 
 const DEFAULT_INTERVAL_SECONDS = 6;
+
+// Side positions keep the copy off the middle of the photo and swap the flat
+// scrim for a gradient, so the subject (e.g. the card) stays bright. On small
+// screens the copy drops to the bottom with a bottom-up gradient instead.
+const SLIDE_ALIGN_CLASSES: Record<HeroCarouselContentPosition, string> = {
+  center: "items-center justify-center",
+  left: "items-end justify-center md:items-center md:justify-start",
+  right: "items-end justify-center md:items-center md:justify-end",
+};
+
+const SLIDE_HEIGHT_CLASSES: Record<HeroCarouselContentPosition, string> = {
+  center: "min-h-[480px] md:min-h-[560px]",
+  left: "min-h-[560px]",
+  right: "min-h-[560px]",
+};
+
+const SLIDE_OVERLAY_CLASSES: Record<HeroCarouselContentPosition, string> = {
+  center: "bg-ink/45",
+  left: "bg-gradient-to-t from-ink/85 via-ink/25 to-transparent md:bg-gradient-to-r md:from-ink/80 md:via-ink/30 md:to-transparent",
+  right: "bg-gradient-to-t from-ink/85 via-ink/25 to-transparent md:bg-gradient-to-l md:from-ink/80 md:via-ink/30 md:to-transparent",
+};
+
+const SLIDE_COPY_CLASSES: Record<HeroCarouselContentPosition, string> = {
+  center: "max-w-2xl items-center text-center",
+  left: "max-w-2xl items-center text-center md:max-w-md md:items-start md:px-14 md:text-left",
+  right: "max-w-2xl items-center text-center md:max-w-md md:items-start md:px-14 md:text-left",
+};
 
 const SLIDE_VISIBILITY_CLASSES = {
   active: "opacity-100",
@@ -100,6 +130,7 @@ export function HeroCarousel({
             const isActive = index === current;
             const showCta = Boolean(slide.ctaLabel?.trim() && slide.ctaHref?.trim());
             const Heading = index === 0 ? "h1" : "h2";
+            const position = slide.contentPosition ?? "center";
 
             return (
               <div
@@ -109,7 +140,9 @@ export function HeroCarousel({
                 aria-label={`${index + 1} of ${count}`}
                 aria-hidden={!isActive}
                 inert={!isActive}
-                className={`relative col-start-1 row-start-1 flex min-h-[480px] items-center justify-center transition-opacity duration-700 ease-in-out motion-reduce:transition-none md:min-h-[560px] ${
+                className={`relative col-start-1 row-start-1 flex transition-opacity duration-700 ease-in-out motion-reduce:transition-none ${
+                  SLIDE_HEIGHT_CLASSES[position]
+                } ${SLIDE_ALIGN_CLASSES[position]} ${
                   isActive ? SLIDE_VISIBILITY_CLASSES.active : SLIDE_VISIBILITY_CLASSES.inactive
                 }`}
               >
@@ -124,12 +157,12 @@ export function HeroCarousel({
                 ) : (
                   <div className="absolute inset-0 bg-gradient-to-br from-ink to-primary" />
                 )}
-                <div className="absolute inset-0 bg-ink/45" />
+                <div className={`absolute inset-0 ${SLIDE_OVERLAY_CLASSES[position]}`} />
 
                 <div
-                  className={`relative z-10 flex max-w-2xl flex-col items-center gap-5 px-6 py-16 text-center transition-all duration-700 ease-out motion-reduce:transition-none md:gap-6 ${
-                    isActive ? "translate-y-0" : "translate-y-3"
-                  }`}
+                  className={`relative z-10 flex flex-col gap-5 px-6 py-16 transition-all duration-700 ease-out motion-reduce:transition-none md:gap-6 ${
+                    SLIDE_COPY_CLASSES[position]
+                  } ${isActive ? "translate-y-0" : "translate-y-3"}`}
                 >
                   {slide.eyebrow && (
                     <span className="text-sm font-medium uppercase tracking-wide text-accent">

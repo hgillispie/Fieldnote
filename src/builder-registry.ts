@@ -341,6 +341,7 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
               "A hiker with a loaded backpack looking out over a misty, rust-colored mountain valley",
           },
           {
+            contentPosition: "left",
             eyebrow: "Fieldnote Card",
             heading: "The card built for the trip you're actually taking",
             subheading: "No annual fee. 2x points on every Fieldnote purchase.",
@@ -375,6 +376,14 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
           },
         ],
         subFields: [
+          {
+            name: "contentPosition",
+            type: "text",
+            enum: ["center", "left", "right"],
+            defaultValue: "center",
+            helperText:
+              "Where the text sits. Use left or right to keep it clear of the subject of the photo.",
+          },
           { name: "eyebrow", type: "text" },
           { name: "heading", type: "text", required: true },
           { name: "subheading", type: "longText" },
