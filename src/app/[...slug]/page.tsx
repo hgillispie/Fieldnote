@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
-import { fetchOneEntry, isPreviewing } from "@builder.io/sdk-react";
-import { builderFetch } from "@/lib/builder-fetch";
+import { isPreviewing } from "@builder.io/sdk-react";
+import { fetchPageEntry } from "@/lib/builder-page";
 import { RenderBuilderContent } from "@/components/RenderBuilderContent";
-import { BUILDER_API_KEY } from "@/lib/builder-config";
 import {
   resolveLocaleFromFirstSegment,
   resolveRequestedLocale,
@@ -111,7 +110,11 @@ export default async function CatchAllPage({
   const locale = resolveRequestedLocale(queryLocale, pathLocale);
   const pathSegments = consumedSegment ? slug.slice(1) : slug;
 
-  if (pathSegments.length === 0) {
+  if (
+    pathSegments.length === 0 ||
+    (pathSegments[0] === "archive" &&
+      !isPreviewing(rawSearchParams as Record<string, string | string[]>))
+  ) {
     notFound();
   }
 
@@ -121,27 +124,9 @@ export default async function CatchAllPage({
   // landing-page first (time-boxed campaign override), page second (the
   // generic catch-all). Both calls fail soft to `null`, matching every other
   // Builder fetch in this app.
-  const landingPage = await fetchOneEntry({
-    fetch: builderFetch,
-    apiKey: BUILDER_API_KEY,
-    model: "landing-page",
-    userAttributes: { urlPath, locale },
-    locale,
-    enrich: true,
-  }).catch(() => null);
+  const entry = await fetchPageEntry({ urlPath, locale }, locale);
 
-  const content =
-    landingPage ??
-    (await fetchOneEntry({
-      fetch: builderFetch,
-      apiKey: BUILDER_API_KEY,
-      model: "page",
-      userAttributes: { urlPath, locale },
-      locale,
-      enrich: true,
-    }).catch(() => null));
-
-  if (!content) {
+  if (!entry) {
     // BUILDER PREVIEW ESCAPE HATCH
     //
     // A brand-new landing-page/page entry has no published content yet, so
@@ -176,11 +161,9 @@ export default async function CatchAllPage({
     notFound();
   }
 
-  const model = landingPage ? "landing-page" : "page";
-
   return (
     <main className="flex-1">
-      <RenderBuilderContent content={content} model={model} locale={locale} />
+      <RenderBuilderContent content={entry.content} model={entry.model} locale={locale} />
     </main>
   );
 }

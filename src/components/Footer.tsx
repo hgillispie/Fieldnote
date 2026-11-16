@@ -39,11 +39,11 @@ const LINK_COLUMNS: { heading: string; links: { href: string; label: string }[] 
   {
     heading: "Company",
     links: [
-      { href: "/about-fieldnote", label: "Our Story" },
-      { href: "/sustainability", label: "Sustainability" },
-      { href: "/stores", label: "Stores" },
+      { href: "/about", label: "Our Story" },
+      { href: "/about/sustainability", label: "Sustainability" },
+      { href: "/about/stores", label: "Stores" },
       { href: "/pro", label: "Pro & Wholesale" },
-      { href: "/careers", label: "Careers" },
+      { href: "/about/careers", label: "Careers" },
     ],
   },
   {

@@ -12,6 +12,14 @@ const nextConfig: NextConfig = {
   env: {
     CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
   },
+  async redirects() {
+    return [
+      { source: "/about-fieldnote", destination: "/about", permanent: true },
+      { source: "/sustainability", destination: "/about/sustainability", permanent: true },
+      { source: "/careers", destination: "/about/careers", permanent: true },
+      { source: "/stores", destination: "/about/stores", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;
