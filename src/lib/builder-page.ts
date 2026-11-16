@@ -5,6 +5,7 @@ import { BUILDER_API_KEY } from "@/lib/builder-config";
 // Priority order: a time-boxed landing-page overrides any other page model at
 // the same URL while it is live.
 export const PAGE_MODELS = [
+  "card-models",
   "landing-page",
   "shop",
   "help-center",
