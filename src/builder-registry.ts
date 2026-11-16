@@ -153,6 +153,7 @@ import { StatBand } from "@/components/builder/StatBand";
 import { PullQuote } from "@/components/builder/PullQuote";
 import { StoreList } from "@/components/builder/StoreList";
 import { PolicyDocument } from "@/components/builder/PolicyDocument";
+import { VideoGallery, DEFAULT_VIDEOS } from "@/components/builder/VideoGallery";
 
 // No defaultValue on either CTA field: the button renders only when an
 // editor sets both, so a legal or informational page never picks up a
@@ -1213,6 +1214,61 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
         type: "boolean",
         defaultValue: true,
         helperText: "Shows the On this page list once there are three or more sections.",
+      },
+    ],
+  },
+  {
+    component: VideoGallery,
+    name: "VideoGallery",
+    group: "Fieldnote",
+    image:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='6' fill='%23F7F5F1'/%3E%3Crect x='5' y='8' width='14' height='10' rx='2' fill='%231B3A2F'/%3E%3Crect x='21' y='8' width='14' height='10' rx='2' fill='%231B3A2F'/%3E%3Crect x='5' y='22' width='14' height='10' rx='2' fill='%231B3A2F'/%3E%3Crect x='21' y='22' width='14' height='10' rx='2' fill='%231B3A2F'/%3E%3Cpath d='M10.5 11l4 2-4 2z' fill='%23D4622A'/%3E%3Cpath d='M26.5 11l4 2-4 2z' fill='%23D4622A'/%3E%3Cpath d='M10.5 25l4 2-4 2z' fill='%23D4622A'/%3E%3Cpath d='M26.5 25l4 2-4 2z' fill='%23D4622A'/%3E%3C/svg%3E",
+    noWrap: true,
+    inputs: [
+      { name: "heading", type: "text", defaultValue: "Watch and learn" },
+      {
+        name: "subheading",
+        type: "longText",
+        defaultValue: "Films, how-tos and field stories from the Fieldnote team.",
+      },
+      {
+        name: "layout",
+        type: "text",
+        enum: ["grid", "featured"],
+        defaultValue: "grid",
+        helperText:
+          "grid shows every video as a card; featured shows one large player with the rest in a list beside it.",
+      },
+      {
+        name: "columns",
+        type: "text",
+        enum: ["2", "3", "4"],
+        defaultValue: "3",
+        helperText: "Number of grid columns at desktop width.",
+        showIf: (options: Map<string, unknown>) => options.get("layout") !== "featured",
+      },
+      {
+        name: "videos",
+        type: "list",
+        helperText: "Videos only load when a visitor clicks play.",
+        defaultValue: DEFAULT_VIDEOS,
+        subFields: [
+          { name: "title", type: "text", required: true, defaultValue: "New video" },
+          {
+            name: "url",
+            type: "url",
+            required: true,
+            helperText: "A YouTube or Vimeo link, or a direct https link to an .mp4 file.",
+          },
+          { name: "description", type: "text" },
+          { name: "duration", type: "text", helperText: "Optional, e.g. 3:45." },
+          {
+            name: "poster",
+            type: "file",
+            allowedFileTypes: ["jpeg", "jpg", "png", "webp"],
+            helperText: "Optional. YouTube videos get a thumbnail automatically.",
+          },
+        ],
       },
     ],
   },
