@@ -110,7 +110,11 @@ export default async function CatchAllPage({
   const locale = resolveRequestedLocale(queryLocale, pathLocale);
   const pathSegments = consumedSegment ? slug.slice(1) : slug;
 
-  if (pathSegments.length === 0) {
+  if (
+    pathSegments.length === 0 ||
+    (pathSegments[0] === "archive" &&
+      !isPreviewing(rawSearchParams as Record<string, string | string[]>))
+  ) {
     notFound();
   }
 
