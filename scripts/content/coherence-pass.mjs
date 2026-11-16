@@ -195,7 +195,7 @@ function homepageBodyBlocks(existingGrid, suffix = "") {
         imageAlt: "A hiker with a yellow pack walking into a green mountain valley",
         imagePosition: "right",
         linkLabel: "Read our story",
-        linkHref: "/about-fieldnote",
+        linkHref: "/about",
       }),
     ]),
   ];
@@ -291,7 +291,7 @@ function ourStoryBlocks() {
         heading: "Keep exploring",
         columns: "3",
         cards: [
-          { icon: "leaf", title: "Sustainability", description: "Why a lifetime repair guarantee is our biggest environmental lever.", linkLabel: "Read more", linkHref: "/sustainability" },
+          { icon: "leaf", title: "Sustainability", description: "Why a lifetime repair guarantee is our biggest environmental lever.", linkLabel: "Read more", linkHref: "/about/sustainability" },
           { icon: "compass", title: "Careers", description: "Small teams, real trips, and five paid field days a year.", linkLabel: "See open roles", linkHref: "/careers" },
           { icon: "mountain", title: "Visit a store", description: "Expert fitting and a guide on staff at all 14 locations.", linkLabel: "Find a store", linkHref: "/stores" },
         ],
