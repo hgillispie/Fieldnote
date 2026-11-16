@@ -5,9 +5,6 @@ import { EditorEmptyState } from "./EditorEmptyState";
 import { SectionHeader } from "./SectionHeader";
 import { SectionShell } from "./SectionShell";
 
-type VideoGalleryLayout = "grid" | "featured";
-type VideoGalleryColumns = "2" | "3" | "4";
-
 interface VideoItem {
   title: string;
   url: string;
@@ -19,8 +16,6 @@ interface VideoItem {
 interface VideoGalleryProps {
   heading?: string;
   subheading?: string;
-  layout?: VideoGalleryLayout;
-  columns?: VideoGalleryColumns;
   videos?: VideoItem[];
   attributes?: Record<string, unknown>;
 }
@@ -57,12 +52,6 @@ export const DEFAULT_VIDEOS: VideoItem[] = [
   },
 ];
 
-const COLUMN_CLASSES: Record<VideoGalleryColumns, string> = {
-  "2": "sm:grid-cols-2",
-  "3": "sm:grid-cols-2 lg:grid-cols-3",
-  "4": "sm:grid-cols-2 lg:grid-cols-4",
-};
-
 const YOUTUBE_PATTERN = /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/;
 const VIMEO_PATTERN = /vimeo\.com\/(?:video\/)?(\d+)/;
 
@@ -91,8 +80,6 @@ interface ResolvedVideo {
 export function VideoGallery({
   heading,
   subheading,
-  layout = "grid",
-  columns = "3",
   videos,
   attributes,
 }: VideoGalleryProps) {
@@ -104,7 +91,7 @@ export function VideoGallery({
   }
 
   const [activeIndex, setActiveIndex] = useState(0);
-  const [playingIndex, setPlayingIndex] = useState<number | null>(null);
+  const [playing, setPlaying] = useState(false);
 
   if (items.length === 0) {
     return (
@@ -121,70 +108,50 @@ export function VideoGallery({
     <SectionShell attributes={attributes} spacing="md">
       <SectionHeader heading={heading} subheading={subheading} />
 
-      {layout === "featured" ? (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr] lg:gap-8">
-          <div>
-            <VideoPlayer
-              key={currentIndex}
-              video={items[currentIndex]}
-              playing={playingIndex === currentIndex}
-              onPlay={() => setPlayingIndex(currentIndex)}
-            />
-            <div className="mt-4">
-              <h3 className="font-display text-xl text-ink">{items[currentIndex].item.title}</h3>
-              {items[currentIndex].item.description && (
-                <p className="mt-2 text-base text-slate">{items[currentIndex].item.description}</p>
-              )}
-            </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr] lg:gap-8">
+        <div>
+          <VideoPlayer
+            key={currentIndex}
+            video={items[currentIndex]}
+            playing={playing}
+            onPlay={() => setPlaying(true)}
+          />
+          <div className="mt-4">
+            <h3 className="font-display text-xl text-ink">{items[currentIndex].item.title}</h3>
+            {items[currentIndex].item.description && (
+              <p className="mt-2 text-base text-slate">{items[currentIndex].item.description}</p>
+            )}
           </div>
-
-          <ul className="flex flex-col gap-3">
-            {items.map((video, index) => (
-              <li key={`${video.item.url}-${index}`}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveIndex(index);
-                    setPlayingIndex(index);
-                  }}
-                  aria-current={index === currentIndex}
-                  className={`flex w-full items-center gap-3 rounded-md border p-2 text-left transition hover:bg-surface-alt ${
-                    index === currentIndex ? "border-accent bg-surface-alt" : "border-sand bg-surface"
-                  }`}
-                >
-                  <div className="w-28 shrink-0">
-                    <VideoThumbnail video={video} size="sm" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-ink">{video.item.title}</p>
-                    {video.item.duration && (
-                      <p className="mt-0.5 text-xs text-slate">{video.item.duration}</p>
-                    )}
-                  </div>
-                </button>
-              </li>
-            ))}
-          </ul>
         </div>
-      ) : (
-        <ul className={`grid grid-cols-1 gap-6 lg:gap-8 ${COLUMN_CLASSES[columns]}`}>
+
+        <ul className="flex flex-col gap-3">
           {items.map((video, index) => (
-            <li key={`${video.item.url}-${index}`} className="flex flex-col gap-3">
-              <VideoPlayer
-                video={video}
-                playing={playingIndex === index}
-                onPlay={() => setPlayingIndex(index)}
-              />
-              <div>
-                <h3 className="text-base font-medium text-ink">{video.item.title}</h3>
-                {video.item.description && (
-                  <p className="mt-1 text-sm text-slate">{video.item.description}</p>
-                )}
-              </div>
+            <li key={`${video.item.url}-${index}`}>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveIndex(index);
+                  setPlaying(true);
+                }}
+                aria-current={index === currentIndex}
+                className={`flex w-full items-center gap-3 rounded-md border p-2 text-left transition hover:bg-surface-alt ${
+                  index === currentIndex ? "border-accent bg-surface-alt" : "border-sand bg-surface"
+                }`}
+              >
+                <div className="w-28 shrink-0">
+                  <VideoThumbnail video={video} size="sm" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-ink">{video.item.title}</p>
+                  {video.item.duration && (
+                    <p className="mt-0.5 text-xs text-slate">{video.item.duration}</p>
+                  )}
+                </div>
+              </button>
             </li>
           ))}
         </ul>
-      )}
+      </div>
     </SectionShell>
   );
 }

@@ -1232,25 +1232,10 @@ export const CUSTOM_COMPONENTS: RegisteredComponent[] = [
         defaultValue: "Films, how-tos and field stories from the Fieldnote team.",
       },
       {
-        name: "layout",
-        type: "text",
-        enum: ["grid", "featured"],
-        defaultValue: "grid",
-        helperText:
-          "grid shows every video as a card; featured shows one large player with the rest in a list beside it.",
-      },
-      {
-        name: "columns",
-        type: "text",
-        enum: ["2", "3", "4"],
-        defaultValue: "3",
-        helperText: "Number of grid columns at desktop width.",
-        showIf: (options: Map<string, unknown>) => options.get("layout") !== "featured",
-      },
-      {
         name: "videos",
         type: "list",
-        helperText: "Videos only load when a visitor clicks play.",
+        helperText:
+          "One large player with the rest in a list beside it. Videos only load when a visitor clicks play.",
         defaultValue: DEFAULT_VIDEOS,
         subFields: [
           { name: "title", type: "text", required: true, defaultValue: "New video" },
